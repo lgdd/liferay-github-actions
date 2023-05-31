@@ -44,8 +44,7 @@ jobs:
               });
       - name: Check Upgrade Branch
         run: |
-          echo "UPGRADE_BRANCH_NAME_DOES_NOT_EXIST=$((git show-ref refs/heads/${{ env.UPGRADE_BRANCH_NAME }} == ''))" >> $GITHUB_ENV
-          echo "UPGRADE_BRANCH_NAME_DOES_NOT_EXIST=${{ env.UPGRADE_BRANCH_NAME_DOES_NOT_EXIST }}"
+          echo "UPGRADE_BRANCH_NAME_ORIGIN=$(git ls-remote --heads origin ${{ env.UPGRADE_BRANCH_NAME }})" >> $GITHUB_ENV
       - name: Set up JDK
         id: setup_jdk
         uses: actions/setup-java@v3
@@ -68,6 +67,11 @@ jobs:
           cd ${{ env.WORKING_DIRECTORY }}
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew build
-      - name: Create PR
+      - name: Create Issue
+        if: failure()
         run: |
-          echo ""
+          echo "Create issue"
+      - name: Create PR
+        if: if always() && ${{ env.UPGRADE_BRANCH_NAME_ORIGIN == '' }}
+        run: |
+          echo "RUN PR"
