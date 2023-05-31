@@ -75,3 +75,4 @@ jobs:
         if: if always() && ${{ env.UPGRADE_BRANCH_NAME_ORIGIN == '' }}
         run: |
           echo "RUN PR"
+          echo ${{ env.UPGRADE_BRANCH_NAME_ORIGIN == '' }}
