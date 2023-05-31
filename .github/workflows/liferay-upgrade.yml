@@ -29,8 +29,6 @@ jobs:
             const productSplit = LFR_CURRENT_PRODUCT_NAME.split('-');
             const currentEdition = productSplit[0]
             const currentVersion = productSplit[1].replaceAll('.', '')
-            console.log("currentEdition=" + currentEdition);
-            console.log("currentVersion=" + currentVersion);
             const liferayProductInfoUrl =
               `https://github.com/lgdd/liferay-product-info/raw/main/${currentEdition}_${currentVersion}_product_info.json`;
 
@@ -38,10 +36,9 @@ jobs:
               .then((res) => res.json())
               .then((json) => {
                 const latestProduct = json[json.length - 1];
-                console.log("LFR_LATEST_PRODUCT_NAME=" + latestProduct.name);
                 core.exportVariable('LFR_LATEST_PRODUCT_NAME', latestProduct.name);
               });
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK
         id: setup_jdk
         uses: actions/setup-java@v3
@@ -63,5 +60,4 @@ jobs:
         run: |
           cd ${{ env.WORKING_DIRECTORY }}
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
-          cat gradle.properties
           ./gradlew build
