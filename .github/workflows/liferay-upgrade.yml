@@ -40,7 +40,7 @@ jobs:
                 const upgradeBranchName = latestProduct.name.replaceAll('.', '');
                 core.exportVariable('LFR_LATEST_PRODUCT_NAME', latestProduct.name);
                 core.exportVariable('LFR_LATEST_PRODUCT_VERSION_NAME', latestProduct.liferayProductVersion);
-                core.exportVariable('UPGRADE_BRANCH_NAME', latestProduct.name);
+                core.exportVariable('UPGRADE_BRANCH_NAME', latestProduct.name.replaceAll('.', ''));
               });
       - name: Check Upgrade Branch
         run: |
