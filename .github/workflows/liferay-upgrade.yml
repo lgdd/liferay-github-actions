@@ -1,0 +1,65 @@
+name: liferay-upgrade
+
+on:
+  push:
+  # schedule:
+  #   # https://crontab.guru/every-night-at-midnight
+  #   - cron: '0 0 * * *'
+
+jobs:
+  upgrade-checker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Get Current Liferay Update
+        run: |
+          echo "LFR_CURRENT_PRODUCT_NAME=$(cat gradle.properties | grep liferay.workspace.product= | cut -d '=' -f)" >> $LFR_CURRENT_PRODUCT_NAME
+      - name: Fetch Latest Liferay Update
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fetch = require('node-fetch')
+            const { LFR_CURRENT_PRODUCT_NAME } = process.env;
+            const productSplit = LFR_CURRENT_PRODUCT_NAME.split('-');
+            const currentEdition = productSplit[0]
+            const currentVersion = productSplit[1].replaceAll('.', '')
+            console.log(currentEdition);
+            console.log(currentVersion);
+            const liferayProductInfoUrl =
+              `https://github.com/lgdd/liferay-product-info/raw/main/${currentEdition}_${currentVersion}_product_info.json`;
+
+            fetch(liferayProductInfoUrl, { method: 'Get' })
+              .then((res) => res.json())
+              .then((json) => {
+                const latestProduct = json[json.length - 1];
+                console.log(latestProduct.name);
+                core.exportVariable('LFR_LATEST_PRODUCT_NAME', latestProduct.name);
+              });
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        id: setup_jdk
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+      - name: Cache Gradle packages
+        id: cache_gradle_packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Build Modules
+        id: build_gradle
+        run: |
+          cd 74-dxp-gradle-workspace
+          echo "Current Liferay Product Name:"
+          cat gradle.properties
+          sed -i -e 's/${LFR_CURRENT_PRODUCT_NAME}/${LFR_LATEST_PRODUCT_NAME}/g' gradle.properties
+          echo "New Liferay Product Name:"
+          cat gradle.properties
+          ./gradlew build
