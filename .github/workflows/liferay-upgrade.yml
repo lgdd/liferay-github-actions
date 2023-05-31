@@ -21,11 +21,12 @@ jobs:
         with:
           script: |
             const { LFR_CURRENT_PRODUCT_NAME } = process.env;
+            console.log("LFR_CURRENT_PRODUCT_NAME=" + LFR_CURRENT_PRODUCT_NAME)
             const productSplit = LFR_CURRENT_PRODUCT_NAME.split('-');
             const currentEdition = productSplit[0]
             const currentVersion = productSplit[1].replaceAll('.', '')
-            console.log(currentEdition);
-            console.log(currentVersion);
+            console.log("currentEdition=" + currentEdition);
+            console.log("currentVersion=" + currentVersion);
             const liferayProductInfoUrl =
               `https://github.com/lgdd/liferay-product-info/raw/main/${currentEdition}_${currentVersion}_product_info.json`;
 
@@ -33,7 +34,7 @@ jobs:
               .then((res) => res.json())
               .then((json) => {
                 const latestProduct = json[json.length - 1];
-                console.log(latestProduct.name);
+                console.log("LFR_LATEST_PRODUCT_NAME=" + latestProduct.name);
                 core.exportVariable('LFR_LATEST_PRODUCT_NAME', latestProduct.name);
               });
       - uses: actions/checkout@v2
@@ -57,7 +58,5 @@ jobs:
         id: build_gradle
         run: |
           cd 74-dxp-gradle-workspace
-          sed -i -e 's/${LFR_CURRENT_PRODUCT_NAME}/${LFR_LATEST_PRODUCT_NAME}/g' gradle.properties
-          echo "New Liferay Product Name:"
-          cat gradle.properties
+          sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew build
