@@ -10,7 +10,7 @@ jobs:
   upgrade-checker:
     runs-on: ubuntu-latest
     env:
-      WORKING_DIRECTORY: ./74-dxp-gradle-workspace
+      WORKING_DIRECTORY: ./74-portal-gradle-workspace
       JAVA_DISTRIBUTION: 'zulu'
       JAVA_VERSION: 11
     steps:
