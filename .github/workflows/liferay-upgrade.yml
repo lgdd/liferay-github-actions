@@ -59,4 +59,5 @@ jobs:
         run: |
           cd 74-dxp-gradle-workspace
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
+          cat gradle.properties
           ./gradlew build
