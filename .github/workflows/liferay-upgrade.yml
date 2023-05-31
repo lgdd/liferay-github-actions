@@ -15,7 +15,7 @@ jobs:
       - name: Get Current Liferay Update
         working-directory: ./74-dxp-gradle-workspace
         run: |
-          echo "LFR_CURRENT_PRODUCT_NAME=$(cat gradle.properties | grep liferay.workspace.product= | cut -d '=' -f)" >> $LFR_CURRENT_PRODUCT_NAME
+          echo "LFR_CURRENT_PRODUCT_NAME=$(cat gradle.properties | grep liferay.workspace.product= | cut -d '=' -f2)" >> $LFR_CURRENT_PRODUCT_NAME
       - name: Fetch Latest Liferay Update
         uses: actions/github-script@v6
         with:
