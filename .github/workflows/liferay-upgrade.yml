@@ -10,6 +10,7 @@ jobs:
   upgrade-checker:
     runs-on: ubuntu-latest
     env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       WORKING_DIRECTORY: ./74-portal-gradle-workspace
       JAVA_DISTRIBUTION: 'zulu'
       JAVA_VERSION: 11
@@ -36,16 +37,22 @@ jobs:
               .then((res) => res.json())
               .then((json) => {
                 const latestProduct = json[json.length - 1];
+                const upgradeBranchName = latestProduct.name.replaceAll('.', '');
                 core.exportVariable('LFR_LATEST_PRODUCT_NAME', latestProduct.name);
+                core.exportVariable('LFR_LATEST_PRODUCT_VERSION_NAME', latestProduct.liferayProductVersion);
+                core.exportVariable('UPGRADE_BRANCH_NAME', latestProduct.name);
               });
-      - uses: actions/checkout@v3
+      - name: Check Upgrade Branch
+        run: |
+          echo "UPGRADE_BRANCH_NAME_DOES_NOT_EXIST=$((git show-ref refs/heads/${{ env.UPGRADE_BRANCH_NAME }} == ''))" >> $GITHUB_ENV
+          echo "UPGRADE_BRANCH_NAME_DOES_NOT_EXIST=${{ env.UPGRADE_BRANCH_NAME_DOES_NOT_EXIST }}"
       - name: Set up JDK
         id: setup_jdk
         uses: actions/setup-java@v3
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION || 'zulu' }}
           java-version: ${{ env.JAVA_VERSION || 11}}
-      - name: Cache Gradle packages
+      - name: Cache Gradle Packages
         id: cache_gradle_packages
         uses: actions/cache@v3
         with:
@@ -61,3 +68,7 @@ jobs:
           cd ${{ env.WORKING_DIRECTORY }}
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew build
+      - name: Create PR
+        if: ${{ env. }}
+        run: |
+          echo ""
