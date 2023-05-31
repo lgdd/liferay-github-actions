@@ -69,6 +69,5 @@ jobs:
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew build
       - name: Create PR
-        if: ${{ env. }}
         run: |
           echo ""
