@@ -57,8 +57,6 @@ jobs:
         id: build_gradle
         run: |
           cd 74-dxp-gradle-workspace
-          echo "Current Liferay Product Name:"
-          cat gradle.properties
           sed -i -e 's/${LFR_CURRENT_PRODUCT_NAME}/${LFR_LATEST_PRODUCT_NAME}/g' gradle.properties
           echo "New Liferay Product Name:"
           cat gradle.properties
