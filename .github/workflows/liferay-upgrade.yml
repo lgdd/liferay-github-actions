@@ -75,4 +75,4 @@ jobs:
         if: if always() && ${{ env.UPGRADE_BRANCH_NAME_ORIGIN == '' }}
         run: |
           echo "RUN PR"
-          echo ${{ env.UPGRADE_BRANCH_NAME_ORIGIN == '' }}
+          gh issue list -S "${{ env.LFR_LATEST_PRODUCT_VERSION_NAME }}"
