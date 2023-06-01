@@ -17,6 +17,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Install Blade
+        run: |
+          curl -L https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | sh
+          blade version
       - name: Get Current Liferay Update
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
