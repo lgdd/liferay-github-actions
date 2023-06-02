@@ -17,6 +17,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Set up JDK
+        id: setup_jdk
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION || 'zulu' }}
+          java-version: ${{ env.JAVA_VERSION || 11}}
       - name: Install Blade
         run: |
           curl -L https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | sh
@@ -53,12 +59,6 @@ jobs:
       - name: Check Upgrade Branch
         run: |
           echo "UPGRADE_BRANCH_NAME_ORIGIN=$(git ls-remote --heads origin ${{ env.UPGRADE_BRANCH_NAME }})" >> $GITHUB_ENV
-      - name: Set up JDK
-        id: setup_jdk
-        uses: actions/setup-java@v3
-        with:
-          distribution: ${{ env.JAVA_DISTRIBUTION || 'zulu' }}
-          java-version: ${{ env.JAVA_VERSION || 11}}
       - name: Cache Gradle Packages
         id: cache_gradle_packages
         uses: actions/cache@v3
