@@ -20,6 +20,8 @@ jobs:
       - name: Install Blade
         run: |
           curl -L https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | sh
+          echo "$HOME/jpm/bin"
+          ls $HOME/jpm/bin
           echo "$HOME/jpm/bin" >> $GITHUB_PATH
           blade version
       - name: Get Current Liferay Update
