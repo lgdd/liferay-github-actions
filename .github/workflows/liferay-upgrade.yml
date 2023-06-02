@@ -25,8 +25,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION || 11}}
       - name: Install Blade
         run: |
-          curl -L https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | sh
+          curl -L https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local_jpm_only | sh
           echo "$HOME/jpm/bin" >> ${{ env.GITHUB_PATH }}
+          curl -L https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | sh
       - name: Test Blade
         run: |
           echo ${{ env.GITHUB_PATH }}
