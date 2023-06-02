@@ -21,7 +21,10 @@ jobs:
         run: |
           curl -L https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | sh
           echo "$HOME/jpm/bin" >> ${{ env.GITHUB_PATH }}
-          blade version
+      - name: Test Blade
+        run: |
+          echo ${{ env.GITHUB_PATH }}
+          blade update
       - name: Get Current Liferay Update
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
