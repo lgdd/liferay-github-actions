@@ -75,6 +75,8 @@ jobs:
       - name: Create Pull Request
         if: if always() && ${{ env.NO_UPGRADE_BRANCH }}
         run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git checkout -b ${{ env.UPGRADE_BRANCH_NAME }}
           git add .
           git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
