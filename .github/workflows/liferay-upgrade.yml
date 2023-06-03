@@ -24,10 +24,10 @@ jobs:
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION || 'zulu' }}
           java-version: ${{ env.JAVA_VERSION || 11 }}
-      - name: Install Blade
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | bash
-          echo "$HOME/jpm/bin" >> ${{ env.GITHUB_PATH }}
+      # - name: Install Blade
+      #   run: |
+      #     curl -fsSL https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | bash
+      #     echo "$HOME/jpm/bin" >> ${{ env.GITHUB_PATH }}
       - name: Test Blade
         run: |
           echo ${{ env.GITHUB_PATH }}
@@ -83,7 +83,6 @@ jobs:
           git add .
           git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
           git push -u origin ${{ env.UPGRADE_BRANCH_NAME }}
-          [Upgrade] DXP 7.4 U78
           gh pr create \
-            --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_NAME }}"
+            --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_NAME }}" \
             --body ""
