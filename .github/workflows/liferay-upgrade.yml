@@ -1,4 +1,5 @@
 name: liferay-upgrade
+run-name: Liferay Upgrade
 
 on:
   push:
@@ -22,7 +23,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION || 'zulu' }}
-          java-version: ${{ env.JAVA_VERSION || 11}}
+          java-version: ${{ env.JAVA_VERSION || 11 }}
       - name: Install Blade
         run: |
           curl -fsSL https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | bash
@@ -58,7 +59,7 @@ jobs:
               });
       - name: Check Upgrade Branch
         run: |
-          echo "UPGRADE_BRANCH_NAME_ORIGIN=$(git ls-remote --heads origin ${{ env.UPGRADE_BRANCH_NAME }})" >> $GITHUB_ENV
+          echo "NO_UPGRADE_BRANCH=$(git ls-remote -q | grep -q '${{ env.UPGRADE_BRANCH_NAME }}' && echo false || echo true)" >> $GITHUB_ENV
       - name: Cache Gradle Packages
         id: cache_gradle_packages
         uses: actions/cache@v3
@@ -75,12 +76,14 @@ jobs:
           cd ${{ env.WORKING_DIRECTORY }}
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew build
-      - name: Create Issue
-        if: failure()
+      - name: Create Pull Request
+        if: if always() && ${{ env.NO_UPGRADE_BRANCH }}
         run: |
-          echo "Create issue"
-      - name: Create PR
-        if: if always() && ${{ env.UPGRADE_BRANCH_NAME_ORIGIN == '' }}
-        run: |
-          echo "RUN PR"
-          gh issue list -S "${{ env.LFR_LATEST_PRODUCT_VERSION_NAME }}"
+          git checkout -b ${{ env.UPGRADE_BRANCH_NAME }}
+          git add .
+          git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
+          git push -u origin ${{ env.UPGRADE_BRANCH_NAME }}
+          [Upgrade] DXP 7.4 U78
+          gh pr create \
+            --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_NAME }}"
+            --body ""
