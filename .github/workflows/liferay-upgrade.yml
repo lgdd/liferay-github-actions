@@ -81,6 +81,7 @@ jobs:
           git add .
           git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
           git push -u origin ${{ env.UPGRADE_BRANCH_NAME }}
+          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
           gh pr create \
             --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_NAME }}" \
             --body ""
