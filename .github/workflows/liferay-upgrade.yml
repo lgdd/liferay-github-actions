@@ -96,18 +96,14 @@ jobs:
           cd ${{ env.WORKING_DIRECTORY }}
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew
-          ./gradlew build -S > gradle-out.txt 2> gradle-err.txt
-          cat gradle-out.txt >> gradle-build.txt
-          cat gradle-err.txt >> gradle-build.txt
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "gradle-build<<$EOF" >> $GITHUB_OUTPUT
-          cat gradle-build.txt >> $GITHUB_OUTPUT
-          cat $EOF >> $GITHUB_OUTPUT
-          if [ -s gradle-err.txt ]; then
-              cat gradle-err.txt
+          ./gradlew build -S > ~/gradle-out.txt 2> ~/gradle-err.txt
+          cat gradle-out.txt >> ~/gradle-build.txt
+          cat gradle-err.txt >> ~/gradle-build.txt
+          if [ -s ~/gradle-err.txt ]; then
+              cat ~/gradle-err.txt
               exit 1
           else
-              cat gradle-out.txt
+              cat ~/gradle-out.txt
               exit 0
           fi;
       - name: Create Branch
@@ -124,7 +120,7 @@ jobs:
         run: |
           echo "Build output:" >> pr-body.md
           echo "\`\`\`" >> pr-body.md
-          echo "${{ steps.build-workspace.outputs.gradle-build }}" >> pr-body.md
+          cat gradle-build.txt >> pr-body.md
           echo "\`\`\`" >> pr-body.md
           gh pr create \
             --assignee "${{ env.GITHUB_REPOSITORY_OWNER }}" \
