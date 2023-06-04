@@ -2,6 +2,7 @@ name: liferay-auto-upgrade
 run-name: Liferay Auto Upgrade
 
 on:
+  push:
   schedule:
     # https://crontab.guru/every-monday
     - cron: '0 0 * * MON'
