@@ -125,7 +125,7 @@ jobs:
           cat gradle-build.txt >> pr-body.md
           echo "\`\`\`" >> pr-body.md
           gh pr create \
-            --assignee "${{ env.GITHUB_REPOSITORY_OWNER }}" \
+            --assignee "${{ github.repository_owner }}" \
             --base "${{ env.GITHUB_REF_NAME }}" \
             --head "${{ env.UPGRADE_BRANCH_NAME }}" \
             --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_VERSION_NAME }}" \
