@@ -21,10 +21,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      # - name: Install Blade
-      #   run: |
-      #     curl -fsSL https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | bash
-      #     echo "$HOME/jpm/bin" >> ${{ env.GITHUB_PATH }}
       - name: Get Current Liferay Update
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
@@ -112,8 +108,6 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git checkout -b ${{ env.UPGRADE_BRANCH_NAME }}
-          git add .
-          git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
           git push -u origin ${{ env.UPGRADE_BRANCH_NAME }}
       - name: Create Pull Request
         if: steps.check-branch.outputs.status == 'upgrade'
@@ -128,3 +122,13 @@ jobs:
             --head "${{ env.UPGRADE_BRANCH_NAME }}" \
             --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_VERSION_NAME }}" \
             --body-file pr-body.md
+      - name: Clean Generated Files
+        if: steps.check-branch.outputs.status == 'upgrade'
+        run: |
+          rm ~/gradle-out.txt ~/gradle-err.txt ~/gradle-build.txt
+      - name: Commit Changes
+        if: steps.check-branch.outputs.status == 'upgrade'
+        run: |
+          rm ~/gradle-out.txt ~/gradle-err.txt ~/gradle-build.txt
+          git add .
+          git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
