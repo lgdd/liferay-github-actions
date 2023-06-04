@@ -98,9 +98,11 @@ jobs:
           if [ -s gradle-err.txt ]; then
               cat gradle-err.txt
               rm gradle-err.txt
+              rm gradle-out.txt
               exit 1
           else
               cat gradle-out.txt
+              rm gradle-err.txt
               rm gradle-out.txt
               exit 0
           fi;
