@@ -48,14 +48,16 @@ jobs:
                 const upgradeBranchName = latestProduct.name.replaceAll('.', '');
                 core.exportVariable('LFR_LATEST_PRODUCT_NAME', latestProduct.name);
                 core.exportVariable('LFR_LATEST_PRODUCT_VERSION_NAME', latestProduct.liferayProductVersion);
-                core.exportVariable('UPGRADE_BRANCH_NAME', latestProduct.name.replaceAll('.', ''));
+                core.exportVariable('UPGRADE_BRANCH_NAME', `upgrade-to-${latestProduct.name.replaceAll('.', '')}`);
               });
       - name: Check If Upgrade Needed
         id: check-upgrade
         run: |
           if [ "${{ env.LFR_LATEST_PRODUCT_NAME }}" = "${{ env.LFR_CURRENT_PRODUCT_NAME }}" ]; then
+            echo "Already on the latest version: ${{ env.LFR_LATEST_PRODUCT_NAME }}"
             echo "status=skip" >> $GITHUB_OUTPUT
           else
+            echo "Run upgrade from ${{ env.LFR_CURRENT_PRODUCT_NAME }} to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
             echo "status=upgrade" >> $GITHUB_OUTPUT
           fi;
       - name: Check Upgrade Branch
@@ -93,7 +95,17 @@ jobs:
         run: |
           cd ${{ env.WORKING_DIRECTORY }}
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
-          ./gradlew build
+          ./gradlew build -S > gradle-out.txt 2> gradle-err.txt
+          cat gradle-out.txt >> gradle-build.txt
+          cat gradle-err.txt >> gradle-build.txt
+          echo "gradle-build=$(cat gradle-build.txt)" >> $GITHUB_OUTPUT
+          if [ -s gradle-err.txt ]; then
+              cat gradle-err.txt
+              exit 1
+          else
+              cat gradle-out.txt
+              exit 0
+          fi;
       - name: Create Branch
         if: always() && steps.check-branch.outputs.status == 'upgrade'
         run: |
@@ -106,10 +118,13 @@ jobs:
       - name: Create Pull Request
         if: steps.check-branch.outputs.status == 'upgrade'
         run: |
-          echo "Build output:\n```${{ steps.build-workspace.outputs }}```" >> pr-body.md
+          echo "Build output:" >> pr-body.md
+          echo "\`\`\`" >> pr-body.md
+          echo "${{ steps.build-workspace.outputs.gradle-build }}" >> pr-body.md
+          echo "\`\`\`" >> pr-body.md
           gh pr create \
             --assignee "${{ env.GITHUB_REPOSITORY_OWNER }}" \
             --base "${{ env.GITHUB_REF_NAME }}" \
             --head "${{ env.UPGRADE_BRANCH_NAME }}" \
-            --title "[Liferay Upgrade] From ${{ env.LFR_CURRENT_PRODUCT_NAME }} To ${{ env.LFR_LATEST_PRODUCT_NAME }}" \
+            --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_VERSION_NAME }}" \
             --body-file pr-body.md
