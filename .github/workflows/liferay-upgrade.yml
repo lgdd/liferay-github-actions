@@ -70,13 +70,14 @@ jobs:
             echo "status=upgrade" >> $GITHUB_OUTPUT
           fi;
       - name: Set up JDK
-        if: steps.check-branch.outputs.status == 'upgrade'
         uses: actions/setup-java@v3
+        if: steps.check-branch.outputs.status == 'upgrade'
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION || 'zulu' }}
           java-version: ${{ env.JAVA_VERSION || 11 }}
       - name: Cache Gradle Packages
         uses: actions/cache@v3
+        if: steps.check-branch.outputs.status == 'upgrade'
         with:
           path: |
             ~/.gradle/caches
