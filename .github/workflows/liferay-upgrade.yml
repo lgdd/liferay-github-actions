@@ -112,20 +112,20 @@ jobs:
       - name: Create Pull Request
         if: steps.check-branch.outputs.status == 'upgrade'
         run: |
-          echo "Build output:" >> pr-body.md
-          echo "\`\`\`" >> pr-body.md
-          cat gradle-build.txt >> pr-body.md
-          echo "\`\`\`" >> pr-body.md
+          echo "Build output:" >> ~/pr-body.md
+          echo "\`\`\`" >> ~/pr-body.md
+          cat ~/gradle-build.txt >> ~/pr-body.md
+          echo "\`\`\`" >> ~/pr-body.md
           gh pr create \
             --assignee "${{ env.GITHUB_REPOSITORY_OWNER }}" \
             --base "${{ env.GITHUB_REF_NAME }}" \
             --head "${{ env.UPGRADE_BRANCH_NAME }}" \
             --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_VERSION_NAME }}" \
-            --body-file pr-body.md
+            --body-file ~/pr-body.md
       - name: Clean Generated Files
         if: steps.check-branch.outputs.status == 'upgrade'
         run: |
-          rm ~/gradle-out.txt ~/gradle-err.txt ~/gradle-build.txt
+          rm ~/gradle-out.txt ~/gradle-err.txt ~/gradle-build.txt ~/pr-body.md
       - name: Commit Changes
         if: steps.check-branch.outputs.status == 'upgrade'
         run: |
