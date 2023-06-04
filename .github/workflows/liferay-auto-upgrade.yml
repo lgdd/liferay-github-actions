@@ -21,6 +21,8 @@ jobs:
       - name: List remote branches
         run: |
           git ls-remote -q
+          no_upgrade=$(git ls-remote -q | grep -q 'upgrade-to-dxp-74-u79' && echo false || echo true)
+          echo $no_upgrade
       - name: Liferay Upgrade
         uses: lgdd/liferay-upgrade-action@main
         with:
