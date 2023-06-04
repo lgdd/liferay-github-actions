@@ -95,6 +95,7 @@ jobs:
         run: |
           cd ${{ env.WORKING_DIRECTORY }}
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
+          ./gradlew
           ./gradlew build -S > gradle-out.txt 2> gradle-err.txt
           cat gradle-out.txt >> gradle-build.txt
           cat gradle-err.txt >> gradle-build.txt
