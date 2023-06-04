@@ -14,9 +14,17 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: List remote branches
+        run: |
+          git ls-remote -q
       - name: Liferay Upgrade
         uses: lgdd/liferay-upgrade-action@main
         with:
+          checkout: false
           java-distribution: 'zulu'
           java-version: '11'
           workspace-directory: './74-dxp-gradle-workspace'
