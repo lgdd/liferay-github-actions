@@ -9,6 +9,9 @@ on:
 
 jobs:
   upgrade-checker:
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -18,12 +21,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up JDK
-        id: setup_jdk
-        uses: actions/setup-java@v3
-        with:
-          distribution: ${{ env.JAVA_DISTRIBUTION || 'zulu' }}
-          java-version: ${{ env.JAVA_VERSION || 11 }}
       # - name: Install Blade
       #   run: |
       #     curl -fsSL https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | bash
@@ -53,11 +50,20 @@ jobs:
                 core.exportVariable('LFR_LATEST_PRODUCT_VERSION_NAME', latestProduct.liferayProductVersion);
                 core.exportVariable('UPGRADE_BRANCH_NAME', latestProduct.name.replaceAll('.', ''));
               });
+      - name: Check If Upgrade Needed
+        run: |
+          if [ "${{ env.LFR_LATEST_PRODUCT_NAME }}" = "${{ env.LFR_CURRENT_PRODUCT_NAME }}" ]; then
+            exit 0
+          fi;
       - name: Check Upgrade Branch
         run: |
           echo "NO_UPGRADE_BRANCH=$(git ls-remote -q | grep -q '${{ env.UPGRADE_BRANCH_NAME }}' && echo false || echo true)" >> $GITHUB_ENV
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION || 'zulu' }}
+          java-version: ${{ env.JAVA_VERSION || 11 }}
       - name: Cache Gradle Packages
-        id: cache_gradle_packages
         uses: actions/cache@v3
         with:
           path: |
@@ -66,13 +72,13 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: Build Modules
-        id: build_gradle
+      - name: Build Workspace
+        id: build-workspace
         run: |
           cd ${{ env.WORKING_DIRECTORY }}
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew build
-      - name: Create Pull Request
+      - name: Create Branch
         if: if always() && ${{ env.NO_UPGRADE_BRANCH }}
         run: |
           git config user.name github-actions[bot]
@@ -81,7 +87,12 @@ jobs:
           git add .
           git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
           git push -u origin ${{ env.UPGRADE_BRANCH_NAME }}
-          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+      - name: Create Pull Request
+        run: |
+          echo "Build output:\n```${{ steps.build-workspace.outputs }}```" >> pr-body.md
           gh pr create \
-            --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_NAME }}" \
-            --body ""
+            --assignee "${{ env.GITHUB_REPOSITORY_OWNER }}"
+            --base "${{ env.GITHUB_REF_NAME }}"
+            --head "${{ env.UPGRADE_BRANCH_NAME }}"
+            --title "[Liferay Upgrade] From ${{ env.LFR_CURRENT_PRODUCT_NAME }} To ${{ env.LFR_LATEST_PRODUCT_NAME }}" \
+            --body-file pr-body.md
