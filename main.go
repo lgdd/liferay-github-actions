@@ -12,6 +12,9 @@ func main() {
 		if !info.IsDir() && info.Name() == "Dockerfile" {
 			fmt.Println(fmt.Sprintf("Found Dockerfile under %s", path))
 		}
+		if !info.IsDir() && info.Name() == "LCP.json" {
+			fmt.Println(fmt.Sprintf("Found LCP.json under %s", path))
+		}
 		return nil
 	})
 }
