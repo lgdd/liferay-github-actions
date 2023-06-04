@@ -99,7 +99,10 @@ jobs:
           ./gradlew build -S > gradle-out.txt 2> gradle-err.txt
           cat gradle-out.txt >> gradle-build.txt
           cat gradle-err.txt >> gradle-build.txt
-          echo "gradle-build=$(cat gradle-build.txt)" >> $GITHUB_OUTPUT
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "gradle-build<<$EOF" >> $GITHUB_OUTPUT
+          cat gradle-build.txt >> $GITHUB_OUTPUT
+          cat $EOF >> $GITHUB_OUTPUT
           if [ -s gradle-err.txt ]; then
               cat gradle-err.txt
               exit 1
