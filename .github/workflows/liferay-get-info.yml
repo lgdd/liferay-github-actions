@@ -1,0 +1,17 @@
+name: liferay-get-info
+run-name: Liferay Get Info
+
+on:
+  push:
+
+jobs:
+  liferay-get-info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Get Liferay Info
+        id: get-liferay-info
+        uses: lgdd/get-liferay-info-action@main
+        with:
+          workspace-directory: './74-portal-gradle-workspace'
