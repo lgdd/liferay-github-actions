@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,19 +16,37 @@ func main() {
 	filepath.Walk("./cloud-repo", func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && info.Name() == "Dockerfile" {
 			fmt.Println(fmt.Sprintf("Found Dockerfile under %s", path))
-			dockerImages = append(dockerImages, getDockerImages(path)...)
+			dockerImages = append(dockerImages, getDockerImagesFromDockerfile(path)...)
 		}
 		if !info.IsDir() && info.Name() == "LCP.json" {
 			fmt.Println(fmt.Sprintf("Found LCP.json under %s", path))
+			dockerImages = append(dockerImages, getDockerImageFromLCP(path))
 		}
 		return nil
 	})
+	fmt.Println("------")
 	for _, dockerImage := range dockerImages {
 		fmt.Println(fmt.Sprintf("Found Dockerfile using %s in version %s", dockerImage.Repository, dockerImage.CurrentVersion))
 	}
 }
 
-func getDockerImages(dockerfilePath string) []DockerImage {
+func getDockerImageFromLCP(lcpPath string) DockerImage {
+
+	file, err := os.Open(lcpPath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	byteValue, _ := ioutil.ReadAll(file)
+
+	var dockerImage DockerImage
+	json.Unmarshal(byteValue, &dockerImage)
+
+	return dockerImage
+}
+
+func getDockerImagesFromDockerfile(dockerfilePath string) []DockerImage {
 
 	var dockerImages []DockerImage
 
@@ -41,12 +61,8 @@ func getDockerImages(dockerfilePath string) []DockerImage {
 	for scanner.Scan() {
 		if strings.HasPrefix(scanner.Text(), "FROM") {
 			lineSplit := strings.Split(scanner.Text(), " ")
-			tagSplit := strings.Split(lineSplit[1], ":")
-			dockerImages = append(dockerImages, DockerImage{
-				Path:           dockerfilePath,
-				Repository:     tagSplit[0],
-				CurrentVersion: tagSplit[1],
-			})
+			tag := lineSplit[1]
+			dockerImages = append(dockerImages, newDockerImageFromTag(tag, dockerfilePath))
 		}
 	}
 
@@ -54,6 +70,15 @@ func getDockerImages(dockerfilePath string) []DockerImage {
 		panic(err)
 	}
 	return dockerImages
+}
+
+func newDockerImageFromTag(tag string, dockerfilePath string) DockerImage {
+	tagSplit := strings.Split(tag, ":")
+	return DockerImage{
+		Path:           dockerfilePath,
+		Repository:     tagSplit[0],
+		CurrentVersion: tagSplit[1],
+	}
 }
 
 type LCP struct {
