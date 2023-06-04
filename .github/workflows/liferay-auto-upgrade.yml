@@ -32,7 +32,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Liferay Upgrade
-        uses: lgdd/liferay-upgrade-action@v1
+        uses: lgdd/liferay-upgrade-action@main
         with:
           checkout: false
           java-distribution: 'zulu'
