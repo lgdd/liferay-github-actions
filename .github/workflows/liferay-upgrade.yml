@@ -92,43 +92,37 @@ jobs:
         run: |
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew
-          ./gradlew build -S > ~/gradle-out.txt 2> ~/gradle-err.txt
-          cat ~/gradle-out.txt >> ~/gradle-build.txt
-          cat ~/gradle-err.txt >> ~/gradle-build.txt
-          if [ -s ~/gradle-err.txt ]; then
-              cat ~/gradle-err.txt
+          ./gradlew build -S > gradle-out.txt 2> gradle-err.txt
+          cat gradle-out.txt >> gradle-build.txt
+          cat gradle-err.txt >> gradle-build.txt
+          if [ -s gradle-err.txt ]; then
+              cat gradle-err.txt
+              rm gradle-err.txt
               exit 1
           else
-              cat ~/gradle-out.txt
+              cat gradle-out.txt
+              rm gradle-out.txt
               exit 0
           fi;
-      - name: Create Branch
+      - name: Create Branch & Commit Changes
         if: always() && steps.check-branch.outputs.status == 'upgrade'
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git checkout -b ${{ env.UPGRADE_BRANCH_NAME }}
+          git add --all -- ':!gradle-build.txt'
+          git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
           git push -u origin ${{ env.UPGRADE_BRANCH_NAME }}
       - name: Create Pull Request
         if: steps.check-branch.outputs.status == 'upgrade'
         run: |
-          echo "Build output:" >> ~/pr-body.md
-          echo "\`\`\`" >> ~/pr-body.md
-          cat ~/gradle-build.txt >> ~/pr-body.md
-          echo "\`\`\`" >> ~/pr-body.md
+          echo "Build output:" >> pr-body.md
+          echo "\`\`\`" >> pr-body.md
+          cat gradle-build.txt >> pr-body.md
+          echo "\`\`\`" >> pr-body.md
           gh pr create \
             --assignee "${{ env.GITHUB_REPOSITORY_OWNER }}" \
             --base "${{ env.GITHUB_REF_NAME }}" \
             --head "${{ env.UPGRADE_BRANCH_NAME }}" \
             --title "[Liferay Upgrade] To ${{ env.LFR_LATEST_PRODUCT_VERSION_NAME }}" \
-            --body-file ~/pr-body.md
-      - name: Clean Generated Files
-        if: steps.check-branch.outputs.status == 'upgrade'
-        run: |
-          rm ~/gradle-out.txt ~/gradle-err.txt ~/gradle-build.txt ~/pr-body.md
-      - name: Commit Changes
-        if: steps.check-branch.outputs.status == 'upgrade'
-        run: |
-          rm ~/gradle-out.txt ~/gradle-err.txt ~/gradle-build.txt
-          git add .
-          git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
+            --body-file pr-body.md
