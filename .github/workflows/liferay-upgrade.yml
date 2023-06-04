@@ -58,6 +58,10 @@ jobs:
       - name: Check Upgrade Branch
         run: |
           echo "NO_UPGRADE_BRANCH=$(git ls-remote -q | grep -q '${{ env.UPGRADE_BRANCH_NAME }}' && echo false || echo true)" >> $GITHUB_ENV
+          if [ $NO_UPGRADE_BRANCH = false ]; then
+            echo "Upgrade branch ${{ env.UPGRADE_BRANCH_NAME }} already exists."
+            exit 0
+          fi;
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -79,7 +83,7 @@ jobs:
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew build
       - name: Create Branch
-        if: if always() && ${{ env.NO_UPGRADE_BRANCH }}
+        if: always()
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
