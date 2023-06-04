@@ -62,13 +62,13 @@ jobs:
         id: check-branch
         if: steps.check-upgrade.outputs.status == 'upgrade'
         run: |
-          echo "NO_UPGRADE_BRANCH=$(git ls-remote -q | grep -q '${{ env.UPGRADE_BRANCH_NAME }}' && echo false || echo true)" >> $GITHUB_ENV
-          echo $NO_UPGRADE_BRANCH
-          if [ !$NO_UPGRADE_BRANCH ]; then
+          NO_UPGRADE_BRANCH=$(git ls-remote -q | grep -q '${{ env.UPGRADE_BRANCH_NAME }}' && echo false || echo true)
+          echo "NO_UPGRADE_BRANCH=$NO_UPGRADE_BRANCH" >> $GITHUB_ENV
+          if $NO_UPGRADE_BRANCH then
+            echo "status=upgrade" >> $GITHUB_OUTPUT
+          else
             echo "Upgrade branch ${{ env.UPGRADE_BRANCH_NAME }} already exists."
             echo "status=skip" >> $GITHUB_OUTPUT
-          else
-            echo "status=upgrade" >> $GITHUB_OUTPUT
           fi;
       - name: Set up JDK
         uses: actions/setup-java@v3
