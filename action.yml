@@ -1,0 +1,6 @@
+name: "liferay-cloud-upgrade"
+description: ""
+    
+runs:
+  using: docker
+  image: Dockerfile
