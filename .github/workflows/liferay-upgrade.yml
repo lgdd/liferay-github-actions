@@ -8,7 +8,7 @@ on:
   #   - cron: '0 0 * * *'
 
 jobs:
-  upgrade-checker:
+  liferay-upgrade:
     permissions:
       contents: write
       pull-requests: write
@@ -51,18 +51,26 @@ jobs:
                 core.exportVariable('UPGRADE_BRANCH_NAME', latestProduct.name.replaceAll('.', ''));
               });
       - name: Check If Upgrade Needed
+        id: check-upgrade
         run: |
           if [ "${{ env.LFR_LATEST_PRODUCT_NAME }}" = "${{ env.LFR_CURRENT_PRODUCT_NAME }}" ]; then
-            exit 0
+            echo "status=skip" >> $GITHUB_OUTPUT
+          else
+            echo "status=upgrade" >> $GITHUB_OUTPUT
           fi;
       - name: Check Upgrade Branch
+        id: check-branch
+        if: steps.check-upgrade.outputs.status == 'upgrade'
         run: |
           echo "NO_UPGRADE_BRANCH=$(git ls-remote -q | grep -q '${{ env.UPGRADE_BRANCH_NAME }}' && echo false || echo true)" >> $GITHUB_ENV
           if [ !${{ env.NO_UPGRADE_BRANCH }} ]; then
             echo "Upgrade branch ${{ env.UPGRADE_BRANCH_NAME }} already exists."
-            exit 0
+            echo "status=skip" >> $GITHUB_OUTPUT
+          else
+            echo "status=upgrade" >> $GITHUB_OUTPUT
           fi;
       - name: Set up JDK
+        if: steps.check-branch.outputs.status == 'upgrade'
         uses: actions/setup-java@v3
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION || 'zulu' }}
@@ -77,13 +85,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Build Workspace
+        if: steps.check-branch.outputs.status == 'upgrade'
         id: build-workspace
         run: |
           cd ${{ env.WORKING_DIRECTORY }}
           sed -i -e 's/${{ env.LFR_CURRENT_PRODUCT_NAME }}/${{ env.LFR_LATEST_PRODUCT_NAME }}/g' gradle.properties
           ./gradlew build
       - name: Create Branch
-        if: always()
+        if: always() && steps.check-branch.outputs.status == 'upgrade'
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -92,6 +101,7 @@ jobs:
           git commit -m "chore: upgrade to ${{ env.LFR_LATEST_PRODUCT_NAME }}"
           git push -u origin ${{ env.UPGRADE_BRANCH_NAME }}
       - name: Create Pull Request
+        if: steps.check-branch.outputs.status == 'upgrade'
         run: |
           echo "Build output:\n```${{ steps.build-workspace.outputs }}```" >> pr-body.md
           gh pr create \
