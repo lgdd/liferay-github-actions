@@ -1,5 +1,5 @@
-name: liferay-upgrade
-run-name: Liferay Upgrade
+name: liferay-auto-upgrade
+run-name: Liferay Auto Upgrade
 
 on:
   push:
@@ -30,7 +30,6 @@ jobs:
         with:
           script: |
             const { LFR_CURRENT_PRODUCT_NAME } = process.env;
-            console.log("LFR_CURRENT_PRODUCT_NAME=" + LFR_CURRENT_PRODUCT_NAME)
             const productSplit = LFR_CURRENT_PRODUCT_NAME.split('-');
             const currentEdition = productSplit[0]
             const currentVersion = productSplit[1].replaceAll('.', '')
