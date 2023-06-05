@@ -12,13 +12,9 @@ import (
 )
 
 func main() {
-	fmt.Println(fmt.Sprintf("workspace-directory=%s", os.Args[1]))
 	var dockerImages []DockerImage
-	filepath.Walk("./cloud-repo", func(path string, info fs.FileInfo, err error) error {
-		if !info.IsDir() && info.Name() == "Dockerfile" {
-			fmt.Println(fmt.Sprintf("Found Dockerfile under %s", path))
-			dockerImages = append(dockerImages, getDockerImagesFromDockerfile(path)...)
-		}
+	cloudWorkspace := os.Args[1]
+	filepath.Walk(cloudWorkspace, func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && info.Name() == "LCP.json" {
 			fmt.Println(fmt.Sprintf("Found LCP.json under %s", path))
 			dockerImages = append(dockerImages, getDockerImageFromLCP(path))
@@ -27,7 +23,7 @@ func main() {
 	})
 	fmt.Println("------")
 	for _, dockerImage := range dockerImages {
-		fmt.Println(fmt.Sprintf("Found Dockerfile using %s in version %s", dockerImage.Repository, dockerImage.CurrentVersion))
+		fmt.Println(fmt.Sprintf("Found Docker Images for %s in version %s", dockerImage.Repository, dockerImage.CurrentVersion))
 	}
 }
 
