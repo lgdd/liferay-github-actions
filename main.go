@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -17,7 +18,11 @@ func main() {
 	filepath.Walk(cloudWorkspace, func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && info.Name() == "LCP.json" {
 			fmt.Println(fmt.Sprintf("Found LCP.json under %s", path))
-			dockerImages = append(dockerImages, getDockerImageFromLCP(path))
+			if dockerImage, err := getDockerImageFromLCP(path); err == nil {
+				dockerImages = append(dockerImages, dockerImage)
+			} else {
+				fmt.Println(err)
+			}
 		}
 		return nil
 	})
@@ -27,7 +32,7 @@ func main() {
 	}
 }
 
-func getDockerImageFromLCP(lcpPath string) DockerImage {
+func getDockerImageFromLCP(lcpPath string) (DockerImage, err) {
 
 	file, err := os.Open(lcpPath)
 	if err != nil {
@@ -40,7 +45,11 @@ func getDockerImageFromLCP(lcpPath string) DockerImage {
 	var lcp LCP
 	json.Unmarshal(byteValue, &lcp)
 
-	return newDockerImageFromTag(lcp.Image, lcpPath)
+	if len(lcp.Image) > 0 {
+		return newDockerImageFromTag(lcp.Image, lcpPath), nil
+	}
+
+	return DockerImage{}, errors.New(fmt.Sprintf("No Docker Image used for '%s' in %s", lcp.ID, lcpPath))
 }
 
 func getDockerImagesFromDockerfile(dockerfilePath string) []DockerImage {
