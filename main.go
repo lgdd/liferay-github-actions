@@ -70,7 +70,9 @@ func getDockerImagesFromDockerfile(dockerfilePath string) []DockerImage {
 }
 
 func newDockerImageFromTag(tag string, dockerfilePath string) DockerImage {
+	fmt.Println(tag)
 	tagSplit := strings.Split(tag, ":")
+	fmt.Println(tagSplit)
 	return DockerImage{
 		Path:           dockerfilePath,
 		Repository:     tagSplit[0],
