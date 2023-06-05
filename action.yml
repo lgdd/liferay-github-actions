@@ -1,6 +1,16 @@
 name: "liferay-cloud-upgrade"
 description: ""
-    
+
+inputs:
+  workspace-directory:
+    description: >
+      Path to your Liferay Cloud workspace if different from root directory.
+      It will be use in this actions steps for the 'working-directory' directive.
+    required: false
+    default: .
+
 runs:
   using: docker
   image: Dockerfile
+  args:
+    - ${{ inputs.workspace-directory }}
