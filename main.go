@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,17 +12,18 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	githubactions "github.com/sethvargo/go-githubactions"
 )
 
-// If anyone is looking here, I'm sharing this regex here: https://regex101.com/r/VslQZi/1
-var cloudImagePattern = regexp.MustCompile("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(\\.|\\-)(0|[1-9]\\d*)(\\.|\\-){0,1}((0|[1-9]\\d*){0,1}|jdk\\d{1,})(\\.|\\-){0,1}\\d{0,3}(\\.|\\-){0,1}\\d{0,3}(\\.|\\-){0,1}\\d{0,3}$")
+// Big thank you @balcsida for making a better regex: https://regex101.com/r/mk2TLg/
+var cloudImagePattern = regexp.MustCompile(`^(\d+\.\d+\.\d+(-jdk\d+)?|^\d+\.\d+(-jdk\d+)?)(-\d+\.\d+\.\d+)?$`)
 
 func main() {
 	var dockerImages []DockerImage
-	// cloudWorkspace := os.Args[1]
-	filepath.Walk("./cloud-repo", func(path string, info fs.FileInfo, err error) error {
+	cloudWorkspace := githubactions.GetInput("workspace-directory")
+	filepath.Walk(cloudWorkspace, func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && info.Name() == "LCP.json" {
-			fmt.Println(fmt.Sprintf("Found LCP.json under %s", path))
 			if dockerImage, err := getDockerImageFromLCP(path); err == nil {
 				dockerImages = append(dockerImages, dockerImage)
 			} else {
@@ -32,13 +32,13 @@ func main() {
 		}
 		return nil
 	})
-	fmt.Println("------")
 	for _, dockerImage := range dockerImages {
-		fmt.Println(fmt.Sprintf("Found Docker Image from '%s/%s' used in version '%s'", dockerImage.Namespace, dockerImage.Repository, dockerImage.CurrentVersion))
 		if latestDockerHubResult, err := fetchDockerHubResultForLatestStable(dockerImage); err == nil {
-			fmt.Println(fmt.Sprintf("Latest tag found is '%s'", latestDockerHubResult.Name))
 			dockerImage.DockerHubResult = latestDockerHubResult
-			updateLCP(dockerImage)
+			message := fmt.Sprintf("Found LCP.json using '%s' in version '%s' (latest is '%s')",
+				dockerImage.Namespace+"/"+dockerImage.Repository, dockerImage.CurrentVersion, dockerImage.DockerHubResult.Name)
+			fmt.Println(message)
+			// updateLCP(dockerImage)
 		} else {
 			fmt.Println(err)
 		}
@@ -62,33 +62,8 @@ func getDockerImageFromLCP(lcpPath string) (DockerImage, error) {
 		return newDockerImageFromTag(lcp.Image, lcpPath), nil
 	}
 
-	return DockerImage{}, errors.New(fmt.Sprintf("No Docker Image used for '%s' in %s", lcp.ID, lcpPath))
-}
-
-func getDockerImagesFromDockerfile(dockerfilePath string) []DockerImage {
-
-	var dockerImages []DockerImage
-
-	file, err := os.Open(dockerfilePath)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), "FROM") {
-			lineSplit := strings.Split(scanner.Text(), " ")
-			tag := lineSplit[1]
-			dockerImages = append(dockerImages, newDockerImageFromTag(tag, dockerfilePath))
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		panic(err)
-	}
-	return dockerImages
+	errorMessage := fmt.Sprintf("No Docker Image used for '%s' in %s", lcp.ID, lcpPath)
+	return DockerImage{}, errors.New(errorMessage)
 }
 
 func newDockerImageFromTag(tag string, dockerfilePath string) DockerImage {
@@ -140,7 +115,7 @@ func fetchDockerHubResultForLatestStable(dockerImage DockerImage) (DockerHubResu
 		}
 	}
 
-	return DockerHubResult{}, errors.New("No stable version found.")
+	return DockerHubResult{}, errors.New("no stable version found")
 }
 
 func updateLCP(dockerImage DockerImage) {
@@ -160,6 +135,32 @@ func updateLCP(dockerImage DockerImage) {
 		panic(err)
 	}
 }
+
+// func getDockerImagesFromDockerfile(dockerfilePath string) []DockerImage {
+
+// 	var dockerImages []DockerImage
+
+// 	file, err := os.Open(dockerfilePath)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer file.Close()
+
+// 	scanner := bufio.NewScanner(file)
+
+// 	for scanner.Scan() {
+// 		if strings.HasPrefix(scanner.Text(), "FROM") {
+// 			lineSplit := strings.Split(scanner.Text(), " ")
+// 			tag := lineSplit[1]
+// 			dockerImages = append(dockerImages, newDockerImageFromTag(tag, dockerfilePath))
+// 		}
+// 	}
+
+// 	if err := scanner.Err(); err != nil {
+// 		panic(err)
+// 	}
+// 	return dockerImages
+// }
 
 type LCP struct {
 	ID    string `json:"id"`
