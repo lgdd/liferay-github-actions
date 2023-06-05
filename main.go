@@ -37,10 +37,10 @@ func getDockerImageFromLCP(lcpPath string) DockerImage {
 
 	byteValue, _ := ioutil.ReadAll(file)
 
-	var dockerImage DockerImage
-	json.Unmarshal(byteValue, &dockerImage)
+	var lcp LCP
+	json.Unmarshal(byteValue, &lcp)
 
-	return dockerImage
+	return newDockerImageFromTag(lcp.Image, lcpPath)
 }
 
 func getDockerImagesFromDockerfile(dockerfilePath string) []DockerImage {
