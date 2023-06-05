@@ -13,5 +13,7 @@ jobs:
         id: get-liferay-information
         uses: lgdd/get-liferay-info-action@v1
         with:
-          workspace-directory: './cloud-repo'
+          workspace-directory: './cloud-repo/liferay'
       - uses: ./
+        with:
+          workspace-directory: './cloud-repo'
