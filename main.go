@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	fmt.Println(fmt.Sprintf("workspace-directory=%s", os.Args[0]))
+	fmt.Println(fmt.Sprintf("workspace-directory=%s", os.Args[1]))
 	var dockerImages []DockerImage
 	filepath.Walk("./cloud-repo", func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && info.Name() == "Dockerfile" {
