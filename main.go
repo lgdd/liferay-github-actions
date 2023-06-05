@@ -20,8 +20,8 @@ var cloudImagePattern = regexp.MustCompile("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(\\.|\
 
 func main() {
 	var dockerImages []DockerImage
-	cloudWorkspace := os.Args[1]
-	filepath.Walk(cloudWorkspace, func(path string, info fs.FileInfo, err error) error {
+	// cloudWorkspace := os.Args[1]
+	filepath.Walk("./cloud-repo", func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && info.Name() == "LCP.json" {
 			fmt.Println(fmt.Sprintf("Found LCP.json under %s", path))
 			if dockerImage, err := getDockerImageFromLCP(path); err == nil {
@@ -36,8 +36,9 @@ func main() {
 	for _, dockerImage := range dockerImages {
 		fmt.Println(fmt.Sprintf("Found Docker Image from '%s/%s' used in version '%s'", dockerImage.Namespace, dockerImage.Repository, dockerImage.CurrentVersion))
 		if latestDockerHubResult, err := fetchDockerHubResultForLatestStable(dockerImage); err == nil {
-			dockerImage.DockerHubResult = latestDockerHubResult
 			fmt.Println(fmt.Sprintf("Latest tag found is '%s'", latestDockerHubResult.Name))
+			dockerImage.DockerHubResult = latestDockerHubResult
+			updateLCP(dockerImage)
 		} else {
 			fmt.Println(err)
 		}
@@ -140,6 +141,24 @@ func fetchDockerHubResultForLatestStable(dockerImage DockerImage) (DockerHubResu
 	}
 
 	return DockerHubResult{}, errors.New("No stable version found.")
+}
+
+func updateLCP(dockerImage DockerImage) {
+	imageName := dockerImage.Namespace + "/" + dockerImage.Repository
+	oldImageValue := imageName + ":" + dockerImage.CurrentVersion
+	newImageValue := imageName + ":" + dockerImage.DockerHubResult.Name
+	read, err := ioutil.ReadFile(dockerImage.Path)
+
+	if err != nil {
+		panic(err)
+	}
+
+	newContents := strings.Replace(string(read), oldImageValue, newImageValue, -1)
+
+	err = ioutil.WriteFile(dockerImage.Path, []byte(newContents), 0)
+	if err != nil {
+		panic(err)
+	}
 }
 
 type LCP struct {
