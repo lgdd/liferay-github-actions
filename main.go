@@ -7,10 +7,16 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"time"
 )
+
+// If anyone is looking here, I'm sharing this regex here: https://regex101.com/r/VslQZi/1
+var cloudImagePattern = regexp.MustCompile("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(\\.|\\-)(0|[1-9]\\d*)(\\.|\\-){0,1}((0|[1-9]\\d*){0,1}|jdk\\d{1,})(\\.|\\-){0,1}\\d{0,3}(\\.|\\-){0,1}\\d{0,3}(\\.|\\-){0,1}\\d{0,3}$")
 
 func main() {
 	var dockerImages []DockerImage
@@ -28,11 +34,17 @@ func main() {
 	})
 	fmt.Println("------")
 	for _, dockerImage := range dockerImages {
-		fmt.Println(fmt.Sprintf("Found Docker Images for %s in version %s", dockerImage.Repository, dockerImage.CurrentVersion))
+		fmt.Println(fmt.Sprintf("Found Docker Image from '%s/%s' used in version '%s'", dockerImage.Namespace, dockerImage.Repository, dockerImage.CurrentVersion))
+		if latestDockerHubResult, err := fetchDockerHubResultForLatestStable(dockerImage); err == nil {
+			dockerImage.DockerHubResult = latestDockerHubResult
+			fmt.Println(fmt.Sprintf("Latest tag found is '%s'", latestDockerHubResult.Name))
+		} else {
+			fmt.Println(err)
+		}
 	}
 }
 
-func getDockerImageFromLCP(lcpPath string) (DockerImage, err) {
+func getDockerImageFromLCP(lcpPath string) (DockerImage, error) {
 
 	file, err := os.Open(lcpPath)
 	if err != nil {
@@ -79,14 +91,55 @@ func getDockerImagesFromDockerfile(dockerfilePath string) []DockerImage {
 }
 
 func newDockerImageFromTag(tag string, dockerfilePath string) DockerImage {
-	fmt.Println(tag)
 	tagSplit := strings.Split(tag, ":")
-	fmt.Println(tagSplit)
+	namespaceRepositorySplit := strings.Split(tagSplit[0], "/")
+	namespace := "library"
+	repository := tagSplit[0]
+	if len(namespaceRepositorySplit) > 1 {
+		namespace = namespaceRepositorySplit[0]
+		repository = namespaceRepositorySplit[1]
+	}
 	return DockerImage{
 		Path:           dockerfilePath,
-		Repository:     tagSplit[0],
+		Namespace:      namespace,
+		Repository:     repository,
 		CurrentVersion: tagSplit[1],
 	}
+}
+
+func fetchDockerHubResultForLatestStable(dockerImage DockerImage) (DockerHubResult, error) {
+	var urlBuilder strings.Builder
+	urlBuilder.WriteString("https://registry.hub.docker.com/v2/repositories/")
+	urlBuilder.WriteString(dockerImage.Namespace)
+	urlBuilder.WriteString("/")
+	urlBuilder.WriteString(dockerImage.Repository)
+	urlBuilder.WriteString("/tags?page_size=1024")
+
+	resp, err := http.Get(urlBuilder.String())
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	var response DockerHubResponse
+	json.Unmarshal(body, &response)
+
+	for _, result := range response.Results {
+		if cloudImagePattern.MatchString(result.Name) {
+			if strings.Contains(dockerImage.Repository, "dxp") {
+				if result.Name[0:3] == dockerImage.CurrentVersion[0:3] {
+					return result, nil
+				}
+			} else {
+				return result, nil
+			}
+		}
+	}
+
+	return DockerHubResult{}, errors.New("No stable version found.")
 }
 
 type LCP struct {
@@ -95,8 +148,47 @@ type LCP struct {
 }
 
 type DockerImage struct {
-	Path           string
-	Repository     string
-	CurrentVersion string
-	NewVersion     string
+	Path            string
+	Namespace       string
+	Repository      string
+	CurrentVersion  string
+	DockerHubResult DockerHubResult
+}
+
+type DockerHubResponse struct {
+	Count    int               `json:"count"`
+	Next     string            `json:"next"`
+	Previous any               `json:"previous"`
+	Results  []DockerHubResult `json:"results"`
+}
+
+type DockerHubResult struct {
+	Creator int `json:"creator"`
+	ID      int `json:"id"`
+	Images  []struct {
+		Architecture string    `json:"architecture"`
+		Features     string    `json:"features"`
+		Variant      any       `json:"variant"`
+		Digest       string    `json:"digest"`
+		Os           string    `json:"os"`
+		OsFeatures   string    `json:"os_features"`
+		OsVersion    any       `json:"os_version"`
+		Size         int       `json:"size"`
+		Status       string    `json:"status"`
+		LastPulled   time.Time `json:"last_pulled"`
+		LastPushed   time.Time `json:"last_pushed"`
+	} `json:"images"`
+	LastUpdated         time.Time `json:"last_updated"`
+	LastUpdater         int       `json:"last_updater"`
+	LastUpdaterUsername string    `json:"last_updater_username"`
+	Name                string    `json:"name"`
+	Repository          int       `json:"repository"`
+	FullSize            int       `json:"full_size"`
+	V2                  bool      `json:"v2"`
+	TagStatus           string    `json:"tag_status"`
+	TagLastPulled       time.Time `json:"tag_last_pulled"`
+	TagLastPushed       time.Time `json:"tag_last_pushed"`
+	MediaType           string    `json:"media_type"`
+	ContentType         string    `json:"content_type"`
+	Digest              string    `json:"digest"`
 }
