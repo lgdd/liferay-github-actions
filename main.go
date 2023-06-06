@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,21 +9,107 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
+	gh "github.com/cli/go-gh/v2"
 	githubactions "github.com/sethvargo/go-githubactions"
 )
+
+const upgradeBranchName = "upgrade-liferay-cloud-images"
 
 // Big thank you @balcsida for making a better regex: https://regex101.com/r/mk2TLg/
 var cloudImagePattern = regexp.MustCompile(`^(\d+\.\d+\.\d+(-jdk\d+)?|^\d+\.\d+(-jdk\d+)?)(-\d+\.\d+\.\d+)?$`)
 
 func main() {
+	gitConfigUser()
+	gitFetchAll()
+	mainBranchName := gitGetMainBranchName()
+	fmt.Println("GITHUB_REF_NAME=" + os.Getenv("GITHUB_REF_NAME"))
+	fmt.Println("githubactions.GetInput(\"workspace-directory\")=" + githubactions.GetInput("workspace-directory"))
+	cloudWorkspace := "./cloud-repo"
+	dockerImages := getDockerImagesFromLCPFiles(cloudWorkspace)
+	dockerImagesToUpdate := getDockerImagesToUpdate(dockerImages)
+	if len(dockerImagesToUpdate) > 0 {
+		gitSwitchBranch()
+		for _, dockerImageToUpdate := range dockerImagesToUpdate {
+			updateLCPFileWithLatestVersion(dockerImageToUpdate)
+		}
+		gitCommitAndPush(cloudWorkspace)
+		pullRequestTitle := "[Liferay Cloud Upgrade] New versions for Docker images"
+		pullRequestBody := "New versions are available for Liferay Cloud Docker images"
+		createOrEditPullRequest(mainBranchName, pullRequestTitle, pullRequestBody)
+	}
+}
+
+func gitConfigUser() {
+	runCmd("git", "config", "user.name", "github-actions[bot]")
+	runCmd("git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com")
+}
+
+func gitFetchAll() {
+	runCmd("git", "fetch", "--all")
+	runCmd("git", "pull", "--all")
+}
+
+func gitSwitchBranch() {
+	runCmd("git", "switch", "-c", upgradeBranchName)
+}
+
+func gitCommitAndPush(path string) {
+	runCmd("git", "add", path)
+	runCmd("git", "commit", "-m", "chore: upgrade liferay cloud images")
+	runCmd("git", "push", "-u", "origin", upgradeBranchName)
+}
+
+func createOrEditPullRequest(mainBranchName, title, body string) {
+	_, _, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
+	if err != nil {
+		gh.Exec("pr", "create", upgradeBranchName, "--base", mainBranchName, "--head", upgradeBranchName, "-t", title, "-b", body)
+	} else {
+		gh.Exec("pr", "reopen", upgradeBranchName)
+	}
+}
+
+func gitGetMainBranchName() string {
+	var stdoutBuffer bytes.Buffer
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Stdout = &stdoutBuffer
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+
+	if err != nil {
+		panic(err)
+	}
+
+	return stdoutBuffer.String()
+}
+
+func getDockerImagesToUpdate(dockerImages []DockerImage) []DockerImage {
+	var dockerImagesToUpdate []DockerImage
+	for _, dockerImage := range dockerImages {
+		if latestDockerHubResult, err := fetchDockerHubResultForLatestStable(dockerImage); err == nil {
+			dockerImage.DockerHubResult = latestDockerHubResult
+			message := fmt.Sprintf("Found LCP.json using '%s' in version '%s' (latest is '%s')",
+				dockerImage.Namespace+"/"+dockerImage.Repository, dockerImage.CurrentVersion, dockerImage.DockerHubResult.Name)
+			fmt.Println(message)
+			if dockerImage.CurrentVersion != dockerImage.DockerHubResult.Name {
+				dockerImagesToUpdate = append(dockerImagesToUpdate, dockerImage)
+			}
+		} else {
+			fmt.Println(err)
+		}
+	}
+	return dockerImagesToUpdate
+}
+
+func getDockerImagesFromLCPFiles(rootPath string) []DockerImage {
 	var dockerImages []DockerImage
-	cloudWorkspace := githubactions.GetInput("workspace-directory")
-	filepath.Walk(cloudWorkspace, func(path string, info fs.FileInfo, err error) error {
+	filepath.Walk(rootPath, func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && info.Name() == "LCP.json" {
 			if dockerImage, err := getDockerImageFromLCP(path); err == nil {
 				dockerImages = append(dockerImages, dockerImage)
@@ -32,17 +119,7 @@ func main() {
 		}
 		return nil
 	})
-	for _, dockerImage := range dockerImages {
-		if latestDockerHubResult, err := fetchDockerHubResultForLatestStable(dockerImage); err == nil {
-			dockerImage.DockerHubResult = latestDockerHubResult
-			message := fmt.Sprintf("Found LCP.json using '%s' in version '%s' (latest is '%s')",
-				dockerImage.Namespace+"/"+dockerImage.Repository, dockerImage.CurrentVersion, dockerImage.DockerHubResult.Name)
-			fmt.Println(message)
-			// updateLCP(dockerImage)
-		} else {
-			fmt.Println(err)
-		}
-	}
+	return dockerImages
 }
 
 func getDockerImageFromLCP(lcpPath string) (DockerImage, error) {
@@ -118,7 +195,7 @@ func fetchDockerHubResultForLatestStable(dockerImage DockerImage) (DockerHubResu
 	return DockerHubResult{}, errors.New("no stable version found")
 }
 
-func updateLCP(dockerImage DockerImage) {
+func updateLCPFileWithLatestVersion(dockerImage DockerImage) {
 	imageName := dockerImage.Namespace + "/" + dockerImage.Repository
 	oldImageValue := imageName + ":" + dockerImage.CurrentVersion
 	newImageValue := imageName + ":" + dockerImage.DockerHubResult.Name
@@ -131,6 +208,18 @@ func updateLCP(dockerImage DockerImage) {
 	newContents := strings.Replace(string(read), oldImageValue, newImageValue, -1)
 
 	err = ioutil.WriteFile(dockerImage.Path, []byte(newContents), 0)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func runCmd(command string, args ...string) {
+	cmd := exec.Command(command, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+
 	if err != nil {
 		panic(err)
 	}
