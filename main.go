@@ -56,7 +56,7 @@ func gitFetchAll() {
 
 func gitSwitchBranch() {
 	runCmd("git", "switch", "-c", upgradeBranchName)
-	runCmd("git", "pull")
+	runCmd("git", "pull", "origin", upgradeBranchName)
 }
 
 func gitCommitAndPush(path string) {
