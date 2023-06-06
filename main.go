@@ -34,7 +34,7 @@ func main() {
 	dockerImagesToUpdate := getDockerImagesToUpdate(dockerImages)
 	if len(dockerImagesToUpdate) > 0 {
 		gitSwitchBranch()
-		gitRebase(mainBranchName)
+		gitMergeMainIntoUpgrade(mainBranchName)
 		for _, dockerImageToUpdate := range dockerImagesToUpdate {
 			updateLCPFileWithLatestVersion(dockerImageToUpdate)
 		}
@@ -56,8 +56,8 @@ func gitFetchAll() {
 	runCmd("git", "pull", "--all")
 }
 
-func gitRebase(mainBranchName string) {
-	runCmd("git", "rebase", mainBranchName, "-Xours")
+func gitMergeMainIntoUpgrade(mainBranchName string) {
+	runCmd("git", "merge", mainBranchName, "-Xtheirs", "-m", "\"chore: merge '"+mainBranchName+"' into '"+upgradeBranchName+"'\"")
 }
 
 func gitSwitchBranch() {
