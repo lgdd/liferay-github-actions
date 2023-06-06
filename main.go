@@ -58,7 +58,7 @@ func gitFetchAll() {
 }
 
 func gitMergeMainIntoUpgrade(mainBranchName string) {
-	runCmd("git", "merge", mainBranchName, "-Xtheirs", "-m", "\"chore: merge '"+mainBranchName+"' into '"+upgradeBranchName+"'\"", "--allow-unrelated-histories")
+	runCmd("git", "merge", "origin/"+mainBranchName, "-Xtheirs", "-m", "\"chore: merge '"+mainBranchName+"' into '"+upgradeBranchName+"'\"", "--allow-unrelated-histories")
 }
 
 func gitSwitchBranch(noUpgradeBranch bool) {
