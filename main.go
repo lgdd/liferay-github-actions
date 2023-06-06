@@ -65,11 +65,7 @@ func gitSwitchBranch() {
 	err := cmd.Run()
 
 	if err != nil {
-		if strings.Contains(err.Error(), "couldn't find remote ref "+upgradeBranchName) {
-			fmt.Println("no remote branch found for " + upgradeBranchName)
-		} else {
-			panic(err)
-		}
+		fmt.Println(err.Error())
 	}
 }
 
@@ -80,11 +76,26 @@ func gitCommitAndPush(path string) {
 }
 
 func createOrEditPullRequest(mainBranchName, title, body string) {
-	_, _, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
+	fmt.Println("Run pr edit " + upgradeBranchName)
+	stdout, stderr, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
 	if err != nil {
-		gh.Exec("pr", "create", upgradeBranchName, "--base", mainBranchName, "--head", upgradeBranchName, "-t", title, "-b", body)
+		fmt.Println(stderr)
+		fmt.Println("Run pr create --base " + mainBranchName + " --head " + upgradeBranchName)
+		stdout, stderr, err := gh.Exec("pr", "create", upgradeBranchName, "--base", mainBranchName, "--head", upgradeBranchName, "-t", title, "-b", body)
+		fmt.Println(stdout)
+		fmt.Println(stderr)
+		if err != nil {
+			fmt.Println(err)
+		}
 	} else {
-		gh.Exec("pr", "reopen", upgradeBranchName)
+		fmt.Println(stdout)
+		fmt.Println("Run pr reopen " + upgradeBranchName)
+		stdout, stderr, err := gh.Exec("pr", "reopen", upgradeBranchName)
+		fmt.Println(stdout)
+		fmt.Println(stderr)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
