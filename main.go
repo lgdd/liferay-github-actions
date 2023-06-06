@@ -47,6 +47,7 @@ func main() {
 func gitConfigUser() {
 	runCmd("git", "config", "user.name", "github-actions[bot]")
 	runCmd("git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com")
+	runCmd("git", "config", "pull.rebase", "true")
 }
 
 func gitFetchAll() {
