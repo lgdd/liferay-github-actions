@@ -77,22 +77,22 @@ func gitCommitAndPush(path string) {
 
 func createOrEditPullRequest(mainBranchName, title, body string) {
 	fmt.Println("Run pr edit " + upgradeBranchName)
-	stdout, stderr, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
+	stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
 	if err != nil {
-		fmt.Println(stderr)
+		fmt.Println("error: " + stderrBuffer.String())
 		fmt.Println("Run pr create --base " + mainBranchName + " --head " + upgradeBranchName)
-		stdout, stderr, err := gh.Exec("pr", "create", upgradeBranchName, "--base", mainBranchName, "--head", upgradeBranchName, "-t", title, "-b", body)
-		fmt.Println(stdout)
-		fmt.Println(stderr)
+		stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "create", upgradeBranchName, "--base", mainBranchName, "--head", upgradeBranchName, "-t", title, "-b", body)
+		fmt.Println("out: " + stdoutBuffer.String())
+		fmt.Println("error: " + stderrBuffer.String())
 		if err != nil {
 			fmt.Println(err)
 		}
 	} else {
-		fmt.Println(stdout)
+		fmt.Println("out: " + stdoutBuffer.String())
 		fmt.Println("Run pr reopen " + upgradeBranchName)
-		stdout, stderr, err := gh.Exec("pr", "reopen", upgradeBranchName)
-		fmt.Println(stdout)
-		fmt.Println(stderr)
+		stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "reopen", upgradeBranchName)
+		fmt.Println("out: " + stdoutBuffer.String())
+		fmt.Println("error: " + stderrBuffer.String())
 		if err != nil {
 			fmt.Println(err)
 		}
