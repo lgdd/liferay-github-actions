@@ -80,8 +80,8 @@ func createOrEditPullRequest(mainBranchName, title, body string) {
 	stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
 	if err != nil {
 		fmt.Println("error: " + stderrBuffer.String())
-		fmt.Println("Run pr create " + upgradeBranchName + " --base '" + mainBranchName + "' --head '" + upgradeBranchName + "'")
-		stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "create", "upgrade-liferay-cloud-images", "--base", "'main'", "--head", "'upgrade-liferay-cloud-images'", "-t", title, "-b", body)
+		fmt.Println("Run pr create " + upgradeBranchName + " --base " + mainBranchName + " --head '" + upgradeBranchName)
+		stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "create", upgradeBranchName, "--base", mainBranchName, "-H", upgradeBranchName, "-t", title, "-b", body)
 		fmt.Println("out: " + stdoutBuffer.String())
 		fmt.Println("error: " + stderrBuffer.String())
 		if err != nil {
