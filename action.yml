@@ -17,5 +17,3 @@ runs:
         go-version: ">=1.20.0"
     - run: go run main.go
       shell: bash
-      with:
-        workspace-directory: "./cloud-repo"
