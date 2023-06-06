@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,8 +24,7 @@ const upgradeBranchName = "upgrade-liferay-cloud-images"
 var cloudImagePattern = regexp.MustCompile(`^(\d+\.\d+\.\d+(-jdk\d+)?|^\d+\.\d+(-jdk\d+)?)(-\d+\.\d+\.\d+)?$`)
 
 func main() {
-	noUpgradeBranch := os.Getenv("NO_UPGRADE_BRANCH")
-	fmt.Println("NO_UPGRADE_BRANCH=" + noUpgradeBranch)
+	noUpgradeBranch, _ := strconv.ParseBool(os.Getenv("NO_UPGRADE_BRANCH"))
 	gitConfigUser()
 	gitFetchAll()
 	mainBranchName := os.Getenv("GITHUB_REF_NAME")
@@ -35,7 +35,7 @@ func main() {
 	dockerImages := getDockerImagesFromLCPFiles(cloudWorkspace)
 	dockerImagesToUpdate := getDockerImagesToUpdate(dockerImages)
 	if len(dockerImagesToUpdate) > 0 {
-		gitSwitchBranch()
+		gitSwitchBranch(noUpgradeBranch)
 		gitMergeMainIntoUpgrade(mainBranchName)
 		for _, dockerImageToUpdate := range dockerImagesToUpdate {
 			updateLCPFileWithLatestVersion(dockerImageToUpdate)
@@ -61,8 +61,12 @@ func gitMergeMainIntoUpgrade(mainBranchName string) {
 	runCmd("git", "merge", mainBranchName, "-Xtheirs", "-m", "\"chore: merge '"+mainBranchName+"' into '"+upgradeBranchName+"'\"")
 }
 
-func gitSwitchBranch() {
-	runCmd("git", "switch", "-c", upgradeBranchName)
+func gitSwitchBranch(noUpgradeBranch bool) {
+	if noUpgradeBranch {
+		runCmd("git", "switch", "-c", upgradeBranchName)
+	} else {
+		runCmd("git", "switch", upgradeBranchName)
+	}
 
 	cmd := exec.Command("git", "pull", "origin", upgradeBranchName)
 	cmd.Stdout = os.Stdout
