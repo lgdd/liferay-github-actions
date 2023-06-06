@@ -2,7 +2,7 @@ name: liferay-auto-upgrade
 run-name: Liferay Auto Upgrade
 
 on:
-  # push:
+  push:
   schedule:
     # https://crontab.guru/every-monday
     - cron: '0 0 * * MON'
@@ -34,7 +34,6 @@ jobs:
       - name: Liferay Upgrade
         uses: lgdd/liferay-upgrade-action@main
         with:
-          checkout: false
           java-distribution: 'zulu'
           java-version: '11'
           workspace-directory: './74-dxp-gradle-workspace'
