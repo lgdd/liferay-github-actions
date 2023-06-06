@@ -28,7 +28,7 @@ func main() {
 	// gitFetchAll()
 	// mainBranchName := gitGetMainBranchName()
 	fmt.Println("GITHUB_REF_NAME=" + os.Getenv("GITHUB_REF_NAME"))
-	fmt.Println("os.Args[1]=" + os.Args[1])
+	fmt.Println("WORKSPACE_DIRECTORY=" + os.Getenv("WORKSPACE_DIRECTORY"))
 	cloudWorkspace := "./cloud-repo"
 	dockerImages := getDockerImagesFromLCPFiles(cloudWorkspace)
 	dockerImagesToUpdate := getDockerImagesToUpdate(dockerImages)
