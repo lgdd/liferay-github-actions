@@ -119,7 +119,7 @@ func createOrEditPullRequest(mainBranchName, title, body string) {
 		// pr edit fails, so no pr exists therefore we can run pr create
 		createPullRequest(mainBranchName, title, body)
 	} else {
-		pullRequestUrl := stdoutBuffer.String()
+		pullRequestUrl := strings.TrimSuffix(stdoutBuffer.String(), "\n")
 		fmt.Println("Run pr reopen " + pullRequestUrl)
 		_, stderrBuffer, err := gh.Exec("pr", "reopen", pullRequestUrl)
 		if err != nil {
