@@ -58,7 +58,7 @@ func gitFetchAll() {
 }
 
 func gitMergeMainIntoUpgrade(mainBranchName string) {
-	runCmd("git", "merge", mainBranchName, "-Xtheirs", "-m", "\"chore: merge '"+mainBranchName+"' into '"+upgradeBranchName+"'\"")
+	runCmd("git", "merge", mainBranchName, "-Xtheirs", "-m", "\"chore: merge '"+mainBranchName+"' into '"+upgradeBranchName+"'\"", "--allow-unrelated-histories")
 }
 
 func gitSwitchBranch(noUpgradeBranch bool) {
@@ -68,7 +68,7 @@ func gitSwitchBranch(noUpgradeBranch bool) {
 		runCmd("git", "switch", upgradeBranchName)
 	}
 
-	cmd := exec.Command("git", "pull", "origin", upgradeBranchName)
+	cmd := exec.Command("git", "pull", "origin", upgradeBranchName, "--rebase")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
