@@ -57,7 +57,7 @@ func gitFetchAll() {
 }
 
 func gitRebase(mainBranchName string) {
-	runCmd("git", "rebase", "upstream/"+mainBranchName, "--continue")
+	runCmd("git", "rebase", "--continue", "upstream/"+mainBranchName)
 }
 
 func gitSwitchBranch() {
