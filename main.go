@@ -65,7 +65,11 @@ func gitSwitchBranch() {
 	err := cmd.Run()
 
 	if err != nil {
-		fmt.Println(err)
+		if strings.Contains(err.Error(), "couldn't find remote ref "+upgradeBranchName) {
+			fmt.Println("no remote branch found for " + upgradeBranchName)
+		} else {
+			panic(err)
+		}
 	}
 }
 
