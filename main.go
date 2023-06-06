@@ -24,13 +24,11 @@ const upgradeBranchName = "upgrade-liferay-cloud-images"
 var cloudImagePattern = regexp.MustCompile(`^(\d+\.\d+\.\d+(-jdk\d+)?|^\d+\.\d+(-jdk\d+)?)(-\d+\.\d+\.\d+)?$`)
 
 func main() {
-	noUpgradeBranch, _ := strconv.ParseBool(os.Getenv("NO_UPGRADE_BRANCH"))
+	printExpectedEnv()
 	gitConfigUser()
 	gitFetchAll()
+	noUpgradeBranch, _ := strconv.ParseBool(os.Getenv("NO_UPGRADE_BRANCH"))
 	mainBranchName := os.Getenv("GITHUB_REF_NAME")
-	fmt.Println("GITHUB_REF_NAME=" + os.Getenv("GITHUB_REF_NAME"))
-	fmt.Println("WORKSPACE_DIRECTORY=" + os.Getenv("WORKSPACE_DIRECTORY"))
-	fmt.Println("os.Args[0]=" + os.Args[0])
 	cloudWorkspace := "./cloud-repo"
 	dockerImages := getDockerImagesFromLCPFiles(cloudWorkspace)
 	dockerImagesToUpdate := getDockerImagesToUpdate(dockerImages)
@@ -256,6 +254,12 @@ func runCmd(command string, args ...string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func printExpectedEnv() {
+	fmt.Println("NO_UPGRADE_BRANCH=" + os.Getenv("NO_UPGRADE_BRANCH"))
+	fmt.Println("GITHUB_REF_NAME=" + os.Getenv("GITHUB_REF_NAME"))
+	fmt.Println("WORKSPACE_DIRECTORY=" + os.Getenv("WORKSPACE_DIRECTORY"))
 }
 
 // func getDockerImagesFromDockerfile(dockerfilePath string) []DockerImage {
