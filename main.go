@@ -71,29 +71,26 @@ func gitSwitchBranch() {
 
 func gitCommitAndPush(path string) {
 	runCmd("git", "add", path)
-	runCmd("git", "commit", "-m", "chore: upgrade liferay cloud images")
+	runCmd("git", "diff-index", "--quiet", "HEAD", "||", "git", "commit", "-m", "chore: upgrade liferay cloud images")
 	runCmd("git", "push", "-u", "origin", upgradeBranchName)
 }
 
 func createOrEditPullRequest(mainBranchName, title, body string) {
 	fmt.Println("Run pr edit " + upgradeBranchName)
-	stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
+	_, stderrBuffer, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
 	if err != nil {
 		fmt.Println("error: " + stderrBuffer.String())
 		fmt.Println("Run pr create --base " + mainBranchName + " --head " + upgradeBranchName)
-		stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "create", "--base", mainBranchName, "--head", upgradeBranchName, "-t", title, "-b", body)
-		fmt.Println("out: " + stdoutBuffer.String())
-		fmt.Println("error: " + stderrBuffer.String())
+		_, stderrBuffer, err := gh.Exec("pr", "create", "--base", mainBranchName, "--head", upgradeBranchName, "-t", title, "-b", body)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("error: " + stderrBuffer.String())
+			panic(err)
 		}
 	} else {
-		fmt.Println("out: " + stdoutBuffer.String())
 		fmt.Println("Run pr reopen " + upgradeBranchName)
-		stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "reopen", upgradeBranchName)
-		fmt.Println("out: " + stdoutBuffer.String())
-		fmt.Println("error: " + stderrBuffer.String())
+		_, stderrBuffer, err := gh.Exec("pr", "reopen", upgradeBranchName)
 		if err != nil {
+			fmt.Println("error: " + stderrBuffer.String())
 			fmt.Println(err)
 		}
 	}
