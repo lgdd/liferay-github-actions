@@ -36,9 +36,9 @@ func main() {
 		gitSwitchBranch(noUpgradeBranch)
 		gitMergeMainIntoUpgrade(mainBranchName)
 		var pullRequestBodyBuilder strings.Builder
-		pullRequestBodyBuilder.WriteString("# ⛅️ New versions are available for Liferay Cloud Docker images")
-		pullRequestBodyBuilder.WriteString("| Docker Image | Current Version | Latest Version |")
-		pullRequestBodyBuilder.WriteString("| :--- | :---: | :---: |")
+		pullRequestBodyBuilder.WriteString("# ⛅️ New versions are available for Liferay Cloud Docker images\n")
+		pullRequestBodyBuilder.WriteString("| Docker Image | Current Version | Latest Version |\n")
+		pullRequestBodyBuilder.WriteString("| :--- | :---: | :---: |\n")
 		for _, dockerImageToUpdate := range dockerImagesToUpdate {
 			updateLCPFileWithLatestVersion(dockerImageToUpdate)
 			writeMarkdownTableRow(&pullRequestBodyBuilder, &dockerImageToUpdate)
@@ -61,7 +61,7 @@ func writeMarkdownTableRow(builder *strings.Builder, dockerImageToUpdate *Docker
 	builder.WriteString(" ` | ")
 	builder.WriteString("| `")
 	builder.WriteString(dockerImageToUpdate.DockerHubResult.Name)
-	builder.WriteString(" ` |")
+	builder.WriteString(" ` |\n")
 }
 
 func gitConfigUser() {
