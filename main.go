@@ -96,9 +96,8 @@ func createOrEditPullRequest(mainBranchName, title, body string) {
 			panic(err)
 		}
 	} else {
-		fmt.Println("out: " + stdoutBuffer.String())
-		fmt.Println("err: " + stderrBuffer.String())
-		fmt.Println("Run pr reopen " + upgradeBranchName)
+		pullRequestUrl := stdoutBuffer.String()
+		fmt.Println("Run pr reopen " + pullRequestUrl)
 		_, stderrBuffer, err := gh.Exec("pr", "reopen", upgradeBranchName)
 		if err != nil {
 			fmt.Println("error: " + stderrBuffer.String())
