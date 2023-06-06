@@ -9,11 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Get Liferay Info
-        id: get-liferay-information
-        uses: lgdd/get-liferay-info-action@v1
-        with:
-          workspace-directory: './cloud-repo/liferay'
       - uses: ./
         with:
           workspace-directory: './cloud-repo'
