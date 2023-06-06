@@ -1,0 +1,46 @@
+{
+  "kind": "StatefulSet",
+  "id": "ci",
+  "image": "liferaycloud/jenkins:2.346.3-jdk8-5.0.3",
+  "deploy": false,
+  "memory": 8192,
+  "cpu": 4,
+  "scale": 1,
+  "volumes": {
+    "ciData": "/var/jenkins_home"
+  },
+  "loadBalancer": {
+    "targetPort": 8080
+  },
+  "readinessProbe": {
+    "httpGet": {
+      "path": "/login",
+      "port": 8080
+    },
+    "initialDelaySeconds": 60,
+    "timeoutSeconds": 10,
+    "failureThreshold": 12
+  },
+  "livenessProbe": {
+    "httpGet": {
+      "path": "/login",
+      "port": 8080
+    },
+    "initialDelaySeconds": 300,
+    "timeoutSeconds": 10,
+    "failureThreshold": 12
+  },
+  "env": {
+    "JENKINS_ADMIN_USER_NAME": "lctpillardemotemplate",
+    "JENKINS_URL": "https://ci-lctpillardemotemplate-infra.lfr.cloud",
+    "LCP_CI_SCM_REPOSITORY_NAME": "lctpillardemotemplate",
+    "LCP_CI_SCM_REPOSITORY_OWNER": "dxpcloud",
+    "LCP_CI_DEPLOY_BRANCH": "master-for-merge",
+    "LCP_CI_DEPLOY_TARGET": "prd"
+  },
+  "environments": {
+    "infra": {
+      "deploy": true
+    }
+  }
+}

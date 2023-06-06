@@ -1,0 +1,47 @@
+{
+  "kind": "Deployment",
+  "id": "database",
+  "image": "liferaycloud/database:5.1.0",
+  "memory": 1024,
+  "cpu": 2,
+  "scale": 1,
+  "ports": [
+    {
+      "port": 3306,
+      "external": false
+    },
+    {
+      "port": 3000,
+      "external": false
+    }
+  ],
+  "readinessProbe": {
+    "httpGet": {
+      "path": "/instance/healthy",
+      "port": 3000
+    },
+    "initialDelaySeconds": 30,
+    "periodSeconds": 60,
+    "timeoutSeconds": 10,
+    "failureThreshold": 2
+  },
+  "livenessProbe": {
+    "httpGet": {
+      "path": "/instance/healthy",
+      "port": 3000
+    },
+    "initialDelaySeconds": 600,
+    "periodSeconds": 60,
+    "timeoutSeconds": 60,
+    "failureThreshold": 3
+  },
+  "env": {
+    "LCP_GCP_DATABASE_CHARSET": "utf8mb4",
+    "LCP_GCP_DATABASE_COLLATION": "utf8mb4_unicode_ci"
+  },
+  "environments": {
+    "infra": {
+      "deploy": false
+    }
+  }
+}

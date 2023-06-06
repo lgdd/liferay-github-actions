@@ -1,0 +1,34 @@
+name: liferay-get-info
+run-name: Liferay Get Info
+
+on:
+  push:
+
+jobs:
+  liferay-get-info:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: get-liferay-information
+        uses: lgdd/get-liferay-info-action@v1
+        with:
+          workspace-directory: './74-portal-gradle-workspace'
+      - uses: actions/github-script@v6
+        env:
+          LFR_CURRENT_PRODUCT_NAME: ${{ steps.get-liferay-information.outputs.current-product-name }}
+          LFR_LATEST_PRODUCT_NAME: ${{ steps.get-liferay-information.outputs.latest-product-name }}
+          LFR_LATEST_PRODUCT_VERSION_NAME: ${{ steps.get-liferay-information.outputs.latest-product-version-name }}
+        with:
+          script: |
+            const { LFR_CURRENT_PRODUCT_NAME, LFR_LATEST_PRODUCT_NAME, LFR_LATEST_PRODUCT_VERSION_NAME } = process.env;
+            const upgradeBranchName = `upgrade-to-${LFR_LATEST_PRODUCT_NAME.replaceAll('.', '')}`;
+
+            core.info("LFR_CURRENT_PRODUCT_NAME=" + LFR_CURRENT_PRODUCT_NAME)
+            core.info("LFR_LATEST_PRODUCT_NAME=" + LFR_LATEST_PRODUCT_NAME)
+            core.info("LFR_LATEST_PRODUCT_VERSION_NAME=" + LFR_LATEST_PRODUCT_VERSION_NAME)
+            core.info("UPGRADE_BRANCH_NAME=" + upgradeBranchName)
+
+            core.exportVariable("LFR_CURRENT_PRODUCT_NAME", LFR_CURRENT_PRODUCT_NAME)
+            core.exportVariable("LFR_LATEST_PRODUCT_NAME", LFR_LATEST_PRODUCT_NAME)
+            core.exportVariable("LFR_LATEST_PRODUCT_VERSION_NAME", LFR_LATEST_PRODUCT_VERSION_NAME)
+            core.exportVariable("UPGRADE_BRANCH_NAME", upgradeBranchName)
