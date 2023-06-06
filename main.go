@@ -86,7 +86,7 @@ func gitCommitAndPush(path string) {
 
 func createOrEditPullRequest(mainBranchName, title, body string) {
 	fmt.Println("Run pr edit " + upgradeBranchName)
-	_, stderrBuffer, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
+	stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
 	if err != nil {
 		fmt.Println("error: " + stderrBuffer.String())
 		fmt.Println("Run pr create --base " + mainBranchName + " --head " + upgradeBranchName)
@@ -96,11 +96,13 @@ func createOrEditPullRequest(mainBranchName, title, body string) {
 			panic(err)
 		}
 	} else {
+		fmt.Println("out: " + stdoutBuffer.String())
+		fmt.Println("err: " + stderrBuffer.String())
 		fmt.Println("Run pr reopen " + upgradeBranchName)
 		_, stderrBuffer, err := gh.Exec("pr", "reopen", upgradeBranchName)
 		if err != nil {
 			fmt.Println("error: " + stderrBuffer.String())
-			fmt.Println(err)
+			panic(err)
 		}
 	}
 }
