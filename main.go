@@ -25,23 +25,23 @@ const upgradeBranchName = "upgrade-liferay-cloud-images"
 var cloudImagePattern = regexp.MustCompile(`^(\d+\.\d+\.\d+(-jdk\d+)?|^\d+\.\d+(-jdk\d+)?)(-\d+\.\d+\.\d+)?$`)
 
 func main() {
-	gitConfigUser()
-	gitFetchAll()
-	mainBranchName := gitGetMainBranchName()
+	// gitConfigUser()
+	// gitFetchAll()
+	// mainBranchName := gitGetMainBranchName()
 	fmt.Println("GITHUB_REF_NAME=" + os.Getenv("GITHUB_REF_NAME"))
 	fmt.Println("githubactions.GetInput(\"workspace-directory\")=" + githubactions.GetInput("workspace-directory"))
 	cloudWorkspace := "./cloud-repo"
 	dockerImages := getDockerImagesFromLCPFiles(cloudWorkspace)
 	dockerImagesToUpdate := getDockerImagesToUpdate(dockerImages)
 	if len(dockerImagesToUpdate) > 0 {
-		gitSwitchBranch()
+		// gitSwitchBranch()
 		for _, dockerImageToUpdate := range dockerImagesToUpdate {
 			updateLCPFileWithLatestVersion(dockerImageToUpdate)
 		}
-		gitCommitAndPush(cloudWorkspace)
-		pullRequestTitle := "[Liferay Cloud Upgrade] New versions for Docker images"
-		pullRequestBody := "New versions are available for Liferay Cloud Docker images"
-		createOrEditPullRequest(mainBranchName, pullRequestTitle, pullRequestBody)
+		// gitCommitAndPush(cloudWorkspace)
+		// pullRequestTitle := "[Liferay Cloud Upgrade] New versions for Docker images"
+		// pullRequestBody := "New versions are available for Liferay Cloud Docker images"
+		// createOrEditPullRequest(mainBranchName, pullRequestTitle, pullRequestBody)
 	}
 }
 
