@@ -9,6 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ./
+      - uses: lgdd/liferay-cloud-upgrade-action@main
         with:
           workspace-directory: './cloud-repo'
