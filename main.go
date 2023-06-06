@@ -121,11 +121,14 @@ func createOrEditPullRequest(mainBranchName, title, body string) {
 	} else {
 		pullRequestUrl := stdoutBuffer.String()
 		fmt.Println("Run pr reopen " + pullRequestUrl)
-		_, stderrBuffer, err := gh.Exec("pr", "reopen", upgradeBranchName)
+		_, stderrBuffer, err := gh.Exec("pr", "reopen", pullRequestUrl)
 		if err != nil {
 			fmt.Println("error: " + stderrBuffer.String())
 			// pr reopen fails, so pr lost track of the branch therefore we can run pr create
 			createPullRequest(mainBranchName, title, body)
+		} else {
+			// pr reopen works, let's comment
+			gh.Exec("pr", "comment", pullRequestUrl, "--body", body)
 		}
 	}
 }
