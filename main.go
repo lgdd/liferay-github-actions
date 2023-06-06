@@ -16,7 +16,6 @@ import (
 	"time"
 
 	gh "github.com/cli/go-gh/v2"
-	githubactions "github.com/sethvargo/go-githubactions"
 )
 
 const upgradeBranchName = "upgrade-liferay-cloud-images"
@@ -29,7 +28,7 @@ func main() {
 	// gitFetchAll()
 	// mainBranchName := gitGetMainBranchName()
 	fmt.Println("GITHUB_REF_NAME=" + os.Getenv("GITHUB_REF_NAME"))
-	fmt.Println("githubactions.GetInput(\"workspace-directory\")=" + githubactions.GetInput("workspace-directory"))
+	fmt.Println("os.Args[0]=" + os.Args[0])
 	cloudWorkspace := "./cloud-repo"
 	dockerImages := getDockerImagesFromLCPFiles(cloudWorkspace)
 	dockerImagesToUpdate := getDockerImagesToUpdate(dockerImages)
