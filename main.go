@@ -40,13 +40,8 @@ func main() {
 		pullRequestBodyBuilder.WriteString("| Docker Image | Current Version | Latest Version |\n")
 		pullRequestBodyBuilder.WriteString("| :--- | :---: | :---: |\n")
 		for _, dockerImageToUpdate := range dockerImagesToUpdate {
-			fmt.Println("-- debug --")
-			fmt.Println(dockerImageToUpdate.CurrentVersion)
-			fmt.Println(dockerImageToUpdate.DockerHubResult.Name)
 			updateLCPFileWithLatestVersion(dockerImageToUpdate)
-			writeMarkdownTableRow(&pullRequestBodyBuilder,
-				dockerImageToUpdate.Namespace+"/"+dockerImageToUpdate.Repository,
-				dockerImageToUpdate.CurrentVersion, dockerImageToUpdate.DockerHubResult.Name)
+			writeMarkdownTableRow(&pullRequestBodyBuilder, &dockerImageToUpdate)
 		}
 		gitCommitAndPush(cloudWorkspace)
 		pullRequestTitle := "[Liferay Cloud Upgrade] New versions for Docker images"
@@ -55,15 +50,17 @@ func main() {
 	}
 }
 
-func writeMarkdownTableRow(builder *strings.Builder, imageName, currentVersion, latestVersion string) {
+func writeMarkdownTableRow(builder *strings.Builder, dockerImageToUpdate *DockerImage) {
 	builder.WriteString("| `")
-	builder.WriteString(imageName)
-	builder.WriteString("` | ")
-	builder.WriteString("| `")
-	builder.WriteString(currentVersion)
-	builder.WriteString("` | ")
-	builder.WriteString("| `")
-	builder.WriteString(latestVersion)
+	builder.WriteString(dockerImageToUpdate.Namespace)
+	builder.WriteString("/")
+	builder.WriteString(dockerImageToUpdate.Repository)
+	builder.WriteString("` |")
+	builder.WriteString(" `")
+	builder.WriteString(dockerImageToUpdate.CurrentVersion)
+	builder.WriteString("` |")
+	builder.WriteString(" `")
+	builder.WriteString(dockerImageToUpdate.DockerHubResult.Name)
 	builder.WriteString("` |\n")
 }
 
