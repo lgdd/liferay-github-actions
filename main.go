@@ -54,7 +54,7 @@ func writeMarkdownTableRow(builder *strings.Builder, dockerImageToUpdate *Docker
 	builder.WriteString("| `")
 	builder.WriteString(dockerImageToUpdate.Namespace)
 	builder.WriteString("/")
-	builder.WriteString(dockerImageToUpdate.Namespace)
+	builder.WriteString(dockerImageToUpdate.Repository)
 	builder.WriteString(" ` | ")
 	builder.WriteString("| `")
 	builder.WriteString(dockerImageToUpdate.CurrentVersion)
