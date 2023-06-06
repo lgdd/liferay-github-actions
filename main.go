@@ -23,6 +23,8 @@ const upgradeBranchName = "upgrade-liferay-cloud-images"
 var cloudImagePattern = regexp.MustCompile(`^(\d+\.\d+\.\d+(-jdk\d+)?|^\d+\.\d+(-jdk\d+)?)(-\d+\.\d+\.\d+)?$`)
 
 func main() {
+	noUpgradeBranch := os.Getenv("NO_UPGRADE_BRANCH")
+	fmt.Println("NO_UPGRADE_BRANCH=" + noUpgradeBranch)
 	gitConfigUser()
 	gitFetchAll()
 	mainBranchName := os.Getenv("GITHUB_REF_NAME")
