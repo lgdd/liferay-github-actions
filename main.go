@@ -89,20 +89,26 @@ func createOrEditPullRequest(mainBranchName, title, body string) {
 	stdoutBuffer, stderrBuffer, err := gh.Exec("pr", "edit", upgradeBranchName, "-t", title, "-b", body)
 	if err != nil {
 		fmt.Println("error: " + stderrBuffer.String())
-		fmt.Println("Run pr create --base " + mainBranchName + " --head " + upgradeBranchName)
-		_, stderrBuffer, err := gh.Exec("pr", "create", "--base", mainBranchName, "--head", upgradeBranchName, "-t", title, "-b", body)
-		if err != nil {
-			fmt.Println("error: " + stderrBuffer.String())
-			panic(err)
-		}
+		// pr edit fails, so no pr exists therefore we can run pr create
+		createPullRequest(mainBranchName, title, body)
 	} else {
 		pullRequestUrl := stdoutBuffer.String()
 		fmt.Println("Run pr reopen " + pullRequestUrl)
 		_, stderrBuffer, err := gh.Exec("pr", "reopen", upgradeBranchName)
 		if err != nil {
 			fmt.Println("error: " + stderrBuffer.String())
-			panic(err)
+			// pr reopen fails, so pr lost track of the branch therefore we can run pr create
+			createPullRequest(mainBranchName, title, body)
 		}
+	}
+}
+
+func createPullRequest(mainBranchName, title, body string) {
+	fmt.Println("Run pr create --base " + mainBranchName + " --head " + upgradeBranchName)
+	_, stderrBuffer, err := gh.Exec("pr", "create", "--base", mainBranchName, "--head", upgradeBranchName, "-t", title, "-b", body)
+	if err != nil {
+		fmt.Println("error: " + stderrBuffer.String())
+		panic(err)
 	}
 }
 
