@@ -24,27 +24,44 @@ const upgradeBranchName = "upgrade-liferay-cloud-images"
 var cloudImagePattern = regexp.MustCompile(`^(\d+\.\d+\.\d+(-jdk\d+)?|^\d+\.\d+(-jdk\d+)?)(-\d+\.\d+\.\d+)?$`)
 
 func main() {
-	noUpgradeBranch, _ := strconv.ParseBool(os.Getenv("NO_UPGRADE_BRANCH"))
+	printExpectedEnv()
 	gitConfigUser()
 	gitFetchAll()
+	noUpgradeBranch, _ := strconv.ParseBool(os.Getenv("NO_UPGRADE_BRANCH"))
 	mainBranchName := os.Getenv("GITHUB_REF_NAME")
-	fmt.Println("GITHUB_REF_NAME=" + os.Getenv("GITHUB_REF_NAME"))
-	fmt.Println("WORKSPACE_DIRECTORY=" + os.Getenv("WORKSPACE_DIRECTORY"))
-	fmt.Println("os.Args[0]=" + os.Args[0])
 	cloudWorkspace := "./cloud-repo"
 	dockerImages := getDockerImagesFromLCPFiles(cloudWorkspace)
 	dockerImagesToUpdate := getDockerImagesToUpdate(dockerImages)
 	if len(dockerImagesToUpdate) > 0 {
 		gitSwitchBranch(noUpgradeBranch)
 		gitMergeMainIntoUpgrade(mainBranchName)
+		var pullRequestBodyBuilder strings.Builder
+		pullRequestBodyBuilder.WriteString("# ⛅️ New versions are available for Liferay Cloud Docker images")
+		pullRequestBodyBuilder.WriteString("| Docker Image | Current Version | Latest Version |")
+		pullRequestBodyBuilder.WriteString("| :--- | :---: | :---: |")
 		for _, dockerImageToUpdate := range dockerImagesToUpdate {
 			updateLCPFileWithLatestVersion(dockerImageToUpdate)
+			writeMarkdownTableRow(&pullRequestBodyBuilder, &dockerImageToUpdate)
 		}
 		gitCommitAndPush(cloudWorkspace)
 		pullRequestTitle := "[Liferay Cloud Upgrade] New versions for Docker images"
-		pullRequestBody := "New versions are available for Liferay Cloud Docker images"
+		pullRequestBody := pullRequestBodyBuilder.String()
 		createOrEditPullRequest(mainBranchName, pullRequestTitle, pullRequestBody)
 	}
+}
+
+func writeMarkdownTableRow(builder *strings.Builder, dockerImageToUpdate *DockerImage) {
+	builder.WriteString("| `")
+	builder.WriteString(dockerImageToUpdate.Namespace)
+	builder.WriteString("/")
+	builder.WriteString(dockerImageToUpdate.Namespace)
+	builder.WriteString(" ` | ")
+	builder.WriteString("| `")
+	builder.WriteString(dockerImageToUpdate.CurrentVersion)
+	builder.WriteString(" ` | ")
+	builder.WriteString("| `")
+	builder.WriteString(dockerImageToUpdate.DockerHubResult.Name)
+	builder.WriteString(" ` |")
 }
 
 func gitConfigUser() {
@@ -58,7 +75,7 @@ func gitFetchAll() {
 }
 
 func gitMergeMainIntoUpgrade(mainBranchName string) {
-	runCmd("git", "merge", mainBranchName, "-Xtheirs", "-m", "\"chore: merge '"+mainBranchName+"' into '"+upgradeBranchName+"'\"", "--allow-unrelated-histories")
+	runCmd("git", "merge", "origin/"+mainBranchName, "-Xtheirs", "-m", "\"chore: merge '"+mainBranchName+"' into '"+upgradeBranchName+"'\"", "--allow-unrelated-histories")
 }
 
 func gitSwitchBranch(noUpgradeBranch bool) {
@@ -104,11 +121,14 @@ func createOrEditPullRequest(mainBranchName, title, body string) {
 	} else {
 		pullRequestUrl := stdoutBuffer.String()
 		fmt.Println("Run pr reopen " + pullRequestUrl)
-		_, stderrBuffer, err := gh.Exec("pr", "reopen", upgradeBranchName)
+		_, stderrBuffer, err := gh.Exec("pr", "reopen", pullRequestUrl)
 		if err != nil {
 			fmt.Println("error: " + stderrBuffer.String())
 			// pr reopen fails, so pr lost track of the branch therefore we can run pr create
 			createPullRequest(mainBranchName, title, body)
+		} else {
+			// pr reopen works, let's comment
+			gh.Exec("pr", "comment", pullRequestUrl, "--body", body)
 		}
 	}
 }
@@ -256,6 +276,12 @@ func runCmd(command string, args ...string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func printExpectedEnv() {
+	fmt.Println("NO_UPGRADE_BRANCH=" + os.Getenv("NO_UPGRADE_BRANCH"))
+	fmt.Println("GITHUB_REF_NAME=" + os.Getenv("GITHUB_REF_NAME"))
+	fmt.Println("WORKSPACE_DIRECTORY=" + os.Getenv("WORKSPACE_DIRECTORY"))
 }
 
 // func getDockerImagesFromDockerfile(dockerfilePath string) []DockerImage {
