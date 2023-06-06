@@ -57,13 +57,13 @@ func writeMarkdownTableRow(builder *strings.Builder, dockerImageToUpdate *Docker
 	builder.WriteString(dockerImageToUpdate.Namespace)
 	builder.WriteString("/")
 	builder.WriteString(dockerImageToUpdate.Repository)
-	builder.WriteString(" ` | ")
+	builder.WriteString("` | ")
 	builder.WriteString("| `")
 	builder.WriteString(dockerImageToUpdate.CurrentVersion)
-	builder.WriteString(" ` | ")
+	builder.WriteString("` | ")
 	builder.WriteString("| `")
 	builder.WriteString(dockerImageToUpdate.DockerHubResult.Name)
-	builder.WriteString(" ` |\n")
+	builder.WriteString("` |\n")
 }
 
 func gitConfigUser() {
