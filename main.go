@@ -41,7 +41,8 @@ func main() {
 		pullRequestBodyBuilder.WriteString("| :--- | :---: | :---: |\n")
 		for _, dockerImageToUpdate := range dockerImagesToUpdate {
 			fmt.Println("-- debug --")
-			fmt.Println(dockerImageToUpdate)
+			fmt.Println(dockerImageToUpdate.CurrentVersion)
+			fmt.Println(dockerImageToUpdate.DockerHubResult.Name)
 			updateLCPFileWithLatestVersion(dockerImageToUpdate)
 			writeMarkdownTableRow(&pullRequestBodyBuilder, &dockerImageToUpdate)
 		}
