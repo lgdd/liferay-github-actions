@@ -71,8 +71,17 @@ func gitSwitchBranch() {
 
 func gitCommitAndPush(path string) {
 	runCmd("git", "add", path)
-	runCmd("git", "diff-index", "--quiet", "HEAD", "||", "git", "commit", "-m", "chore: upgrade liferay cloud images")
-	runCmd("git", "push", "-u", "origin", upgradeBranchName)
+
+	cmd := exec.Command("git", "diff-index", "--quiet", "HEAD")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+
+	if err != nil {
+		runCmd("git", "commit", "-m", "chore: upgrade liferay cloud images")
+		runCmd("git", "push", "-u", "origin", upgradeBranchName)
+	}
 }
 
 func createOrEditPullRequest(mainBranchName, title, body string) {
