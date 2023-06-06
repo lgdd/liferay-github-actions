@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,9 +23,9 @@ const upgradeBranchName = "upgrade-liferay-cloud-images"
 var cloudImagePattern = regexp.MustCompile(`^(\d+\.\d+\.\d+(-jdk\d+)?|^\d+\.\d+(-jdk\d+)?)(-\d+\.\d+\.\d+)?$`)
 
 func main() {
-	// gitConfigUser()
-	// gitFetchAll()
-	// mainBranchName := gitGetMainBranchName()
+	gitConfigUser()
+	gitFetchAll()
+	mainBranchName := os.Getenv("GITHUB_REF_NAME")
 	fmt.Println("GITHUB_REF_NAME=" + os.Getenv("GITHUB_REF_NAME"))
 	fmt.Println("WORKSPACE_DIRECTORY=" + os.Getenv("WORKSPACE_DIRECTORY"))
 	fmt.Println("os.Args[0]=" + os.Args[0])
@@ -34,14 +33,14 @@ func main() {
 	dockerImages := getDockerImagesFromLCPFiles(cloudWorkspace)
 	dockerImagesToUpdate := getDockerImagesToUpdate(dockerImages)
 	if len(dockerImagesToUpdate) > 0 {
-		// gitSwitchBranch()
+		gitSwitchBranch()
 		for _, dockerImageToUpdate := range dockerImagesToUpdate {
 			updateLCPFileWithLatestVersion(dockerImageToUpdate)
 		}
-		// gitCommitAndPush(cloudWorkspace)
-		// pullRequestTitle := "[Liferay Cloud Upgrade] New versions for Docker images"
-		// pullRequestBody := "New versions are available for Liferay Cloud Docker images"
-		// createOrEditPullRequest(mainBranchName, pullRequestTitle, pullRequestBody)
+		gitCommitAndPush(cloudWorkspace)
+		pullRequestTitle := "[Liferay Cloud Upgrade] New versions for Docker images"
+		pullRequestBody := "New versions are available for Liferay Cloud Docker images"
+		createOrEditPullRequest(mainBranchName, pullRequestTitle, pullRequestBody)
 	}
 }
 
@@ -72,21 +71,6 @@ func createOrEditPullRequest(mainBranchName, title, body string) {
 	} else {
 		gh.Exec("pr", "reopen", upgradeBranchName)
 	}
-}
-
-func gitGetMainBranchName() string {
-	var stdoutBuffer bytes.Buffer
-	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
-	cmd.Stdout = &stdoutBuffer
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Run()
-
-	if err != nil {
-		panic(err)
-	}
-
-	return stdoutBuffer.String()
 }
 
 func getDockerImagesToUpdate(dockerImages []DockerImage) []DockerImage {
