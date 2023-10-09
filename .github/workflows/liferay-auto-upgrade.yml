@@ -1,0 +1,39 @@
+name: liferay-auto-upgrade
+run-name: Liferay Auto Upgrade
+
+on:
+  push:
+  schedule:
+    # https://crontab.guru/every-monday
+    - cron: '0 0 * * MON'
+
+jobs:
+  liferay-portal-upgrade:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: lgdd/liferay-upgrade-action@main
+        with:
+          java-distribution: 'zulu'
+          java-version: '11'
+          workspace-directory: './74-portal-gradle-workspace'
+
+  liferay-dxp-upgrade:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: lgdd/liferay-upgrade-action@main
+        with:
+          java-distribution: 'zulu'
+          java-version: '11'
+          workspace-directory: './74-dxp-gradle-workspace'

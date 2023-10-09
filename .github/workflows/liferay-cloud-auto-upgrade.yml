@@ -1,0 +1,14 @@
+name: liferay-cloud-auto-upgrade
+run-name: Liferay Cloud Auto Upgrade
+
+on:
+  push:
+
+jobs:
+  liferay-cloud-upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: lgdd/liferay-cloud-upgrade-action@main
+        with:
+          workspace-directory: './cloud-repo'

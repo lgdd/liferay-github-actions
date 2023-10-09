@@ -1,0 +1,1 @@
+Test repo for https://github.com/lgdd/liferay-upgrade-action
