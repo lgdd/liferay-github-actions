@@ -1,7 +1,7 @@
 {
   "kind": "Deployment",
   "id": "database",
-  "image": "liferaycloud/database:5.1.0",
+  "image": "liferaycloud/database:5.4.0",
   "memory": 1024,
   "cpu": 2,
   "scale": 1,
