@@ -1,7 +1,7 @@
 {
   "kind": "StatefulSet",
   "id": "ci",
-  "image": "liferaycloud/jenkins:2.356-jdk8-5.2.5",
+  "image": "liferaycloud/jenkins:2.346.3-jdk8-5.0.3",
   "deploy": false,
   "memory": 8192,
   "cpu": 4,
